@@ -570,6 +570,54 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
 
 <div class="toast" id="toast"></div>
 
+<!-- DRAFT FOLLOW-UP MODAL -->
+<div class="modal-overlay" id="draftModal" onclick="handleOverlay(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr">
+      <span class="modal-hdr-title" id="draft-title">Draft Follow-Up</span>
+      <button class="modal-close" onclick="closeModal('draftModal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="draft-loading" style="text-align:center;padding:32px 0;">
+        <div style="font-size:32px;margin-bottom:12px;">✍️</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text1);margin-bottom:6px;">Drafting your message...</div>
+        <div style="font-size:12px;color:var(--text3);">Claude is personalising this for you</div>
+        <div style="margin-top:16px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;">
+          <div id="draft-progress" style="height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:2px;width:0%;transition:width 2s ease;"></div>
+        </div>
+      </div>
+      <div id="draft-content" style="display:none;">
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">To</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text1);" id="draft-to"></div>
+        </div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">Subject</div>
+          <input type="text" class="fi" id="draft-subject" style="font-size:13px;padding:9px 12px;">
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;">Message</div>
+            <button onclick="redraftMessage()" style="background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;">↺ Redraft</button>
+          </div>
+          <textarea class="fta" id="draft-body" style="height:220px;font-size:13px;line-height:1.6;padding:12px;"></textarea>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="copyDraft()" style="flex:1;padding:13px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:var(--text1);cursor:pointer;">📋 Copy</button>
+          <button onclick="sendDraftEmail()" style="flex:1;padding:13px;background:var(--gold);border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:var(--bg);cursor:pointer;">✉️ Open in Mail</button>
+        </div>
+        <button onclick="logContactedFromDraft()" style="width:100%;padding:12px;border:1.5px solid var(--green-dim);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--green);background:transparent;cursor:pointer;margin-top:8px;">✓ Mark as Contacted After Sending</button>
+      </div>
+      <div id="draft-error" style="display:none;text-align:center;padding:24px;">
+        <div style="font-size:24px;margin-bottom:8px;">⚠️</div>
+        <div style="font-size:13px;color:var(--red);font-weight:600;" id="draft-error-msg">Could not draft message</div>
+        <button onclick="redraftMessage()" style="margin-top:12px;padding:10px 20px;background:var(--gold);border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--bg);cursor:pointer;">Try Again</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════
 // CONFIG
@@ -977,7 +1025,7 @@ function renderProspects() {
       </div>
       <div class="prospect-actions">
         <button class="prospect-act-btn contacted-btn" onclick="markContacted('${p.id}')">✓ Contacted</button>
-        <button class="prospect-act-btn" onclick="editProspect('${p.id}')">✏️ Edit</button>
+        <button class="prospect-act-btn" style="color:var(--gold);" onclick="openDraftModal('${p.id}')">✍️ Draft</button>
         <button class="prospect-act-btn" onclick="openSnoozeProspect('${p.id}')">⏰ Snooze</button>
         <button class="prospect-act-btn del" onclick="deleteProspect('${p.id}')">🗑</button>
       </div>
@@ -1221,7 +1269,8 @@ function openProspectDetail(id) {
     <div class="detail-row"><span class="detail-lbl">Next Contact</span><span class="detail-val">${fmtDate(p.nextContact)}</span></div>
     ${p.notes?`<div class="detail-row"><span class="detail-lbl">Notes</span><span class="detail-val">${esc(p.notes)}</span></div>`:''}
     <div style="height:14px;"></div>
-    <button class="save-btn" onclick="markContacted('${p.id}');closeModal('prospectDetailModal')">✓ Mark as Contacted</button>
+    <button onclick="openDraftModal('${p.id}')" style="width:100%;padding:14px;background:linear-gradient(135deg,#1A2332,#1f3248);border:1.5px solid rgba(201,168,76,0.4);border-radius:var(--radius-sm);font-size:15px;font-weight:800;color:var(--gold);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:0.2px;">✍️ Draft Follow-Up Email</button>
+    <button class="save-btn" style="margin-top:8px;" onclick="markContacted('${p.id}');closeModal('prospectDetailModal')">✓ Mark as Contacted</button>
     <button onclick="editProspect('${p.id}')" style="width:100%;padding:12px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:var(--gold);background:transparent;cursor:pointer;margin-top:8px;">✏️ Edit</button>`;
   openModal('prospectDetailModal');
 }
