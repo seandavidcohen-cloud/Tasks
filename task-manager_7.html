@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SCW">
+<meta name="theme-color" content="#0d1520">
+<title>SCW Task Manager</title>
+<style>
+:root{
+  --bg:#0d1520;--bg2:#131f30;--bg3:#1a2a40;--bg4:#1f3248;
+  --card:#162030;--card2:#1c2d44;
+  --gold:#C9A84C;--gold2:#e2c278;--gold-dim:rgba(201,168,76,0.15);--gold-dim2:rgba(201,168,76,0.08);
+  --white:#ffffff;--text1:#f0f4f8;--text2:#8fa8c0;--text3:#566a80;
+  --red:#e05555;--red-dim:rgba(224,85,85,0.15);
+  --amber:#e8913a;--amber-dim:rgba(232,145,58,0.15);
+  --green:#3aad75;--green-dim:rgba(58,173,117,0.15);
+  --blue:#4a90d9;--blue-dim:rgba(74,144,217,0.15);
+  --purple:#8b5cf6;--purple-dim:rgba(139,92,246,0.15);
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+  --radius:16px;--radius-sm:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overscroll-behavior:none;}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sans-serif;background:var(--bg);color:var(--text1);min-height:100vh;overflow-x:hidden;}
+
+.screen{display:none;flex-direction:column;min-height:100vh;padding-bottom:80px;}
+.screen.active{display:flex;}
+
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom,8px);z-index:100;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 6px;border:none;background:transparent;cursor:pointer;color:var(--text3);font-size:10px;font-weight:600;letter-spacing:0.3px;gap:4px;transition:color 0.15s;position:relative;}
+.nav-btn.active{color:var(--gold);}
+.nav-icon{font-size:20px;line-height:1;}
+.nav-badge{position:absolute;top:6px;right:calc(50% - 18px);background:var(--red);color:white;font-size:9px;font-weight:800;min-width:16px;height:16px;border-radius:8px;padding:0 4px;display:flex;align-items:center;justify-content:center;}
+
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* HOME */
+.home-header{padding:52px 20px 16px;}
+.greeting-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
+.greeting-time{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;}
+.sync-btn{background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;cursor:pointer;}
+.sync-status{font-size:10px;color:var(--text3);margin-bottom:4px;}
+.greeting-name{font-size:26px;font-weight:700;color:var(--text1);letter-spacing:-0.5px;margin-bottom:3px;}
+.greeting-sub{font-size:13px;color:var(--text2);}
+.greeting-sub span{color:var(--gold);font-weight:600;}
+
+/* HERO */
+.hero-card{margin:0 16px 16px;background:linear-gradient(135deg,var(--bg3) 0%,var(--bg4) 100%);border:1px solid rgba(201,168,76,0.25);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden;}
+.hero-card::before{content:'';position:absolute;top:-40px;right:-40px;width:120px;height:120px;background:radial-gradient(circle,rgba(201,168,76,0.12) 0%,transparent 70%);border-radius:50%;}
+.hero-eyebrow{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+.hero-title{font-size:22px;font-weight:700;color:var(--white);letter-spacing:-0.5px;margin-bottom:4px;line-height:1.2;}
+.hero-tag{display:inline-block;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);color:var(--gold2);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:12px;}
+.hero-meta{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
+.hero-meta-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);}
+.hero-meta-item.urgent{color:var(--amber);}
+.hero-task-desc{font-size:13px;color:var(--text2);margin-bottom:14px;}
+.hero-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.hero-btn{display:flex;align-items:center;gap:5px;padding:8px 13px;border-radius:30px;border:none;font-size:12px;font-weight:700;cursor:pointer;transition:transform 0.12s;flex-shrink:0;}
+.hero-btn:active{transform:scale(0.95);}
+.hero-btn.primary{background:var(--gold);color:var(--bg);}
+.hero-btn.secondary{background:var(--bg4);color:var(--text1);border:1px solid var(--border2);}
+.hero-btn.done-btn{background:var(--green-dim);color:var(--green);border:1px solid rgba(58,173,117,0.3);}
+.hero-btn.snooze-btn{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(74,144,217,0.3);}
+
+/* SUMMARY GRID */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px;}
+.summary-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:border-color 0.15s;}
+.summary-card:active{border-color:var(--gold);}
+.summary-card.full{grid-column:span 2;}
+.summary-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.summary-badge{background:var(--gold-dim);color:var(--gold2);font-size:11px;font-weight:800;padding:2px 8px;border-radius:10px;}
+.summary-badge.urgent{background:var(--red-dim);color:var(--red);}
+.summary-count{font-size:22px;font-weight:800;color:var(--text1);margin-bottom:1px;}
+.summary-label{font-size:11px;color:var(--text2);font-weight:500;}
+.summary-peek{font-size:11px;color:var(--text3);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* PAGE HEADER */
+.page-header{padding:52px 20px 14px;background:var(--bg);position:sticky;top:0;z-index:50;border-bottom:1px solid var(--border);}
+.page-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.page-title{font-size:22px;font-weight:700;color:var(--text1);letter-spacing:-0.3px;}
+.icon-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border2);background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:15px;cursor:pointer;color:var(--text2);}
+
+/* FILTER */
+.filter-row{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
+.filter-row::-webkit-scrollbar{display:none;}
+.chip{flex-shrink:0;padding:6px 13px;border-radius:20px;border:1px solid var(--border2);background:transparent;font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;white-space:nowrap;transition:all 0.12s;}
+.chip.active{background:var(--gold);color:var(--bg);border-color:var(--gold);}
+.chip:active{transform:scale(0.96);}
+
+/* TASK CARDS */
+.task-list{padding:12px 16px 8px;}
+.task-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
+.task-item.overdue{border-left:3px solid var(--red);}
+.task-item.due-today{border-left:3px solid var(--amber);}
+.task-item.done-item{opacity:0.4;}
+.task-item-body{padding:13px 13px 10px;cursor:pointer;}
+.task-item-top{display:flex;align-items:flex-start;gap:9px;}
+.type-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+.dot-doer{background:var(--green);}
+.dot-ongoing{background:var(--gold);}
+.task-client{font-size:14px;font-weight:700;color:var(--text1);margin-bottom:2px;}
+.task-desc{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.task-notes-prev{font-size:11px;color:var(--text3);font-style:italic;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.task-meta{display:flex;align-items:center;gap:7px;margin-top:9px;flex-wrap:wrap;}
+.time-chip{display:flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;}
+.time-chip.overdue{background:var(--red-dim);color:var(--red);}
+.time-chip.today{background:var(--amber-dim);color:var(--amber);}
+.time-chip.upcoming{background:var(--green-dim);color:var(--green);}
+.time-chip.no-date{background:rgba(255,255,255,0.05);color:var(--text3);}
+.pri-chip{font-size:10px;font-weight:700;padding:3px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:0.3px;}
+.pri-chip.high{background:var(--red-dim);color:var(--red);}
+.pri-chip.medium{background:var(--amber-dim);color:var(--amber);}
+.pri-chip.low{background:var(--green-dim);color:var(--green);}
+.task-actions{display:flex;border-top:1px solid var(--border);}
+.task-act-btn{flex:1;padding:9px 4px;border:none;background:transparent;font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:background 0.12s;letter-spacing:0.2px;}
+.task-act-btn:active{background:var(--bg3);}
+.task-act-btn:not(:last-child){border-right:1px solid var(--border);}
+.task-act-btn.done{color:var(--green);}
+.task-act-btn.del{color:var(--red);}
+.task-act-btn.reopen{color:var(--amber);}
+
+/* PROSPECT CARDS */
+.prospect-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
+.prospect-card.overdue{border-left:3px solid var(--red);}
+.prospect-card.due-today{border-left:3px solid var(--amber);}
+.prospect-card.upcoming{border-left:3px solid var(--green);}
+.prospect-card.no-date{border-left:3px solid var(--text3);}
+.prospect-body{padding:13px 13px 10px;cursor:pointer;}
+.prospect-name{font-size:14px;font-weight:700;color:var(--text1);margin-bottom:3px;}
+.prospect-stage{font-size:12px;color:var(--text2);margin-bottom:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.prospect-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:2px;}
+.pt-chip{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.3px;}
+.pt-chip.hot{background:var(--red-dim);color:var(--red);}
+.pt-chip.warm{background:var(--amber-dim);color:var(--amber);}
+.pt-chip.cold{background:var(--blue-dim);color:var(--blue);}
+.pt-chip.tbc{background:rgba(255,255,255,0.05);color:var(--text3);}
+.freq-chip{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;background:var(--purple-dim);color:var(--purple);}
+.prospect-actions{display:flex;border-top:1px solid var(--border);}
+.prospect-act-btn{flex:1;padding:9px 4px;border:none;background:transparent;font-size:11px;font-weight:700;color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;transition:background 0.12s;}
+.prospect-act-btn:active{background:var(--bg3);}
+.prospect-act-btn:not(:last-child){border-right:1px solid var(--border);}
+.prospect-act-btn.contacted-btn{color:var(--green);}
+.prospect-act-btn.del{color:var(--red);}
+
+/* EMPTY */
+.empty{text-align:center;padding:56px 24px;color:var(--text3);}
+.empty-icon{font-size:40px;margin-bottom:12px;display:block;}
+.empty-title{font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px;}
+.empty-sub{font-size:13px;line-height:1.5;}
+
+/* FAB */
+.fab{position:fixed;bottom:86px;right:20px;width:54px;height:54px;border-radius:50%;background:var(--gold);border:none;font-size:26px;color:var(--bg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(201,168,76,0.4);cursor:pointer;z-index:99;transition:transform 0.15s;}
+.fab:active{transform:scale(0.93);}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(5,10,18,0.85);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;backdrop-filter:blur(4px);}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--bg2);border-radius:24px 24px 0 0;width:100%;max-width:520px;max-height:94vh;overflow-y:auto;transform:translateY(100%);transition:transform 0.28s cubic-bezier(0.34,1.2,0.64,1);padding-bottom:env(safe-area-inset-bottom,20px);border-top:1px solid var(--border2);}
+.modal-overlay.open .modal{transform:translateY(0);}
+.modal-handle{width:36px;height:4px;background:var(--bg4);border-radius:2px;margin:12px auto 0;}
+.modal-hdr{padding:14px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-hdr-title{font-size:17px;font-weight:700;color:var(--text1);}
+.modal-close{width:28px;height:28px;border-radius:50%;border:none;background:var(--bg3);color:var(--text2);font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.modal-body{padding:18px;}
+
+/* FORM */
+.fg{margin-bottom:14px;}
+.fl{display:block;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
+.fi,.fs,.fta{width:100%;padding:12px 13px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;color:var(--text1);background:var(--bg3);outline:none;transition:border-color 0.15s;-webkit-appearance:none;font-family:inherit;}
+.fi::placeholder,.fta::placeholder{color:var(--text3);}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--gold);}
+.fs option{background:var(--bg2);}
+.fta{resize:none;height:72px;line-height:1.5;}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.type-sel{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.type-opt{padding:11px 6px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);text-align:center;cursor:pointer;transition:all 0.15s;background:var(--bg3);}
+.type-opt.sel-doer{border-color:var(--green);background:var(--green-dim);}
+.type-opt.sel-ongoing{border-color:var(--gold);background:var(--gold-dim);}
+.type-opt-icon{font-size:20px;display:block;margin-bottom:4px;}
+.type-opt-lbl{font-size:10px;font-weight:700;color:var(--text2);display:block;}
+.type-opt.sel-doer .type-opt-lbl{color:var(--green);}
+.type-opt.sel-ongoing .type-opt-lbl{color:var(--gold);}
+
+.pri-sel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.pri-opt{padding:9px 6px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);text-align:center;font-size:12px;font-weight:700;color:var(--text2);background:var(--bg3);cursor:pointer;transition:all 0.15s;}
+.pri-opt.sel-high{border-color:var(--red);background:var(--red-dim);color:var(--red);}
+.pri-opt.sel-medium{border-color:var(--amber);background:var(--amber-dim);color:var(--amber);}
+.pri-opt.sel-low{border-color:var(--green);background:var(--green-dim);color:var(--green);}
+
+.save-btn{width:100%;padding:14px;background:var(--gold);color:var(--bg);border:none;border-radius:var(--radius-sm);font-size:15px;font-weight:800;cursor:pointer;margin-top:6px;transition:opacity 0.15s;}
+.save-btn:active{opacity:0.85;}
+.save-btn.loading{opacity:0.6;pointer-events:none;}
+.danger-btn{width:100%;padding:12px;border:1.5px solid rgba(224,85,85,0.3);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--red);background:transparent;cursor:pointer;margin-top:8px;}
+
+/* SNOOZE */
+.snooze-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.snooze-opt{padding:12px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);text-align:center;cursor:pointer;background:var(--bg3);font-size:13px;font-weight:600;color:var(--text1);transition:all 0.12s;}
+.snooze-opt:active{border-color:var(--gold);color:var(--gold);}
+
+/* DETAIL */
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:11px 0;border-bottom:1px solid var(--border);}
+.detail-row:last-child{border-bottom:none;}
+.detail-lbl{font-size:13px;color:var(--text2);}
+.detail-val{font-size:13px;color:var(--text1);font-weight:600;text-align:right;max-width:62%;word-break:break-word;}
+
+/* TOAST */
+.toast{position:fixed;bottom:98px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);color:var(--text1);padding:10px 18px;border-radius:30px;font-size:13px;font-weight:600;z-index:500;border:1px solid var(--border2);box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* SETTINGS */
+.webhook-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;}
+.webhook-badge.on{background:var(--green-dim);color:var(--green);}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="screen-home">
+  <div class="scroll-area">
+    <div class="home-header">
+      <div class="greeting-row">
+        <div class="greeting-time" id="greeting-time"></div>
+        <button class="sync-btn" onclick="syncAll()">↻ Sync</button>
+      </div>
+      <div class="sync-status" id="sync-status">Live from Sheets</div>
+      <div class="greeting-name">Good morning, Sean</div>
+      <div class="greeting-sub" id="greeting-sub">Loading your day...</div>
+    </div>
+    <div id="hero-zone"></div>
+    <div class="summary-grid">
+      <div class="summary-card" onclick="goTo('followups')">
+        <div class="summary-header"><span style="font-size:18px;">📞</span><span class="summary-badge urgent" id="su-fu-badge" style="display:none">0</span></div>
+        <div class="summary-count" id="su-fu-count">0</div>
+        <div class="summary-label">Follow-Ups Due</div>
+        <div class="summary-peek" id="su-fu-peek">No follow-ups due</div>
+      </div>
+      <div class="summary-card" onclick="goTo('doer')">
+        <div class="summary-header"><span style="font-size:18px;">✅</span><span class="summary-badge urgent" id="su-do-badge" style="display:none">0</span></div>
+        <div class="summary-count" id="su-do-count">0</div>
+        <div class="summary-label">Doer Tasks</div>
+        <div class="summary-peek" id="su-do-peek">No doer tasks</div>
+      </div>
+      <div class="summary-card full" onclick="goTo('ongoing')">
+        <div class="summary-header"><span style="font-size:18px;">📁</span><span class="summary-badge" id="su-on-badge" style="display:none">0</span></div>
+        <div class="summary-count" id="su-on-count">0</div>
+        <div class="summary-label">Ongoing Cases</div>
+        <div class="summary-peek" id="su-on-peek">No ongoing cases</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TASKS (DOER + ONGOING) -->
+<div class="screen" id="screen-tasks">
+  <div class="page-header">
+    <div class="page-title-row">
+      <div class="page-title">Tasks</div>
+      <div class="icon-btn" onclick="openSettings()">⚙️</div>
+    </div>
+    <div class="filter-row">
+      <button class="chip active" onclick="setTaskFilter('all',this)">All</button>
+      <button class="chip" onclick="setTaskFilter('doer',this)">Doer</button>
+      <button class="chip" onclick="setTaskFilter('ongoing',this)">Ongoing</button>
+      <button class="chip" onclick="setTaskFilter('overdue',this)">Overdue</button>
+      <button class="chip" onclick="setTaskFilter('today',this)">Today</button>
+      <button class="chip" onclick="setTaskFilter('done',this)">Completed</button>
+    </div>
+  </div>
+  <div class="scroll-area"><div class="task-list" id="list-tasks"></div></div>
+</div>
+
+<!-- FOLLOW-UPS (PROSPECTS) -->
+<div class="screen" id="screen-followups">
+  <div class="page-header">
+    <div class="page-title-row">
+      <div class="page-title">Follow-Ups</div>
+      <div class="icon-btn" onclick="openAddProspect()">+</div>
+    </div>
+    <div class="filter-row">
+      <button class="chip active" onclick="setProspectFilter('due',this)">Due Now</button>
+      <button class="chip" onclick="setProspectFilter('all',this)">All</button>
+      <button class="chip" onclick="setProspectFilter('hot',this)">🔥 Hot</button>
+      <button class="chip" onclick="setProspectFilter('warm',this)">Warm</button>
+      <button class="chip" onclick="setProspectFilter('cold',this)">Cold</button>
+      <button class="chip" onclick="setProspectFilter('upcoming',this)">Upcoming</button>
+    </div>
+  </div>
+  <div class="scroll-area"><div class="task-list" id="list-followups"></div></div>
+</div>
+
+<!-- ONGOING -->
+<div class="screen" id="screen-ongoing">
+  <div class="page-header">
+    <div class="page-title-row">
+      <div class="page-title">Ongoing Cases</div>
+      <div class="icon-btn" onclick="openAddModal('ongoing')">+</div>
+    </div>
+    <div class="filter-row">
+      <button class="chip active" onclick="setOngoingFilter('active',this)">Active</button>
+      <button class="chip" onclick="setOngoingFilter('all',this)">All</button>
+      <button class="chip" onclick="setOngoingFilter('high',this)">High Priority</button>
+      <button class="chip" onclick="setOngoingFilter('done',this)">Completed</button>
+    </div>
+  </div>
+  <div class="scroll-area"><div class="task-list" id="list-ongoing"></div></div>
+</div>
+
+<!-- NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" onclick="goTo('home',this)"><span class="nav-icon">🏠</span>Home</button>
+  <button class="nav-btn" onclick="goTo('tasks',this)"><span class="nav-icon">✅</span>Tasks<span class="nav-badge" id="nb-tasks" style="display:none"></span></button>
+  <button class="nav-btn" onclick="goTo('followups',this)"><span class="nav-icon">📞</span>Follow-Ups<span class="nav-badge" id="nb-fu" style="display:none"></span></button>
+  <button class="nav-btn" onclick="goTo('ongoing',this)"><span class="nav-icon">📁</span>Cases<span class="nav-badge" id="nb-on" style="display:none"></span></button>
+</nav>
+
+<button class="fab" id="fab" onclick="fabAction()">+</button>
+
+<!-- ADD TASK MODAL -->
+<div class="modal-overlay" id="addModal" onclick="handleOverlay(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr"><span class="modal-hdr-title" id="modal-title">New Task</span><button class="modal-close" onclick="closeModal('addModal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="fg">
+        <label class="fl">Task Type</label>
+        <div class="type-sel">
+          <div class="type-opt sel-doer" data-type="doer" onclick="selType(this)"><span class="type-opt-icon">✅</span><span class="type-opt-lbl">Doer Task</span></div>
+          <div class="type-opt" data-type="ongoing" onclick="selType(this)"><span class="type-opt-icon">📁</span><span class="type-opt-lbl">Ongoing Case</span></div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Client Name</label><input type="text" class="fi" id="in-client" placeholder="e.g. Laura Swart" autocomplete="off"></div>
+      <div class="fg"><label class="fl">Task / Action</label><input type="text" class="fi" id="in-task" placeholder="e.g. Confirm living annuity decision" autocomplete="off"></div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Due Date</label><input type="date" class="fi" id="in-due"></div>
+        <div class="fg"><label class="fl">Due Time</label><input type="time" class="fi" id="in-time"></div>
+      </div>
+      <div class="fg"><label class="fl">Priority</label>
+        <div class="pri-sel">
+          <div class="pri-opt" data-p="high" onclick="selPri(this)">High</div>
+          <div class="pri-opt sel-medium" data-p="medium" onclick="selPri(this)">Medium</div>
+          <div class="pri-opt" data-p="low" onclick="selPri(this)">Low</div>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="in-notes" placeholder="Context, next steps, provider details..."></textarea></div>
+      <button class="save-btn" id="save-btn" onclick="saveTask()"><span id="save-btn-txt">Save Task</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PROSPECT MODAL -->
+<div class="modal-overlay" id="prospectModal" onclick="handleOverlay(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr"><span class="modal-hdr-title" id="prospect-modal-title">New Follow-Up</span><button class="modal-close" onclick="closeModal('prospectModal')">×</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="p-edit-id">
+      <div class="fg"><label class="fl">Full Name</label><input type="text" class="fi" id="p-name" placeholder="e.g. Jan de Beer" autocomplete="off"></div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Stage</label>
+          <select class="fs" id="p-stage">
+            <option>Spoken To, Follow Up</option>
+            <option>Proposal Sent, Decision Not Made</option>
+            <option>Interested, Not Yet Booked</option>
+            <option>First Seen, Decision Not Made</option>
+            <option>Not The Right Time</option>
+            <option>Follow up</option>
+            <option>Not Spoken To</option>
+            <option>TBC</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Type</label>
+          <select class="fs" id="p-type">
+            <option value="Hot">🔥 Hot</option>
+            <option value="Warm" selected>Warm</option>
+            <option value="Cold">Cold</option>
+            <option value="TBC">TBC</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg"><label class="fl">Follow-Up Frequency</label>
+        <select class="fs" id="p-freq">
+          <option>Weekly</option>
+          <option>Biweekly</option>
+          <option selected>Monthly</option>
+          <option>Quarterly</option>
+          <option>Bi-Annually</option>
+        </select>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Last Contacted</label><input type="date" class="fi" id="p-last"></div>
+        <div class="fg"><label class="fl">Next Contact</label><input type="date" class="fi" id="p-next"></div>
+      </div>
+      <div class="fg"><label class="fl">Notes</label><textarea class="fta" id="p-notes" placeholder="Last interaction, context, important details..."></textarea></div>
+      <button class="save-btn" id="p-save-btn" onclick="saveProspect()"><span id="p-save-txt">Save Follow-Up</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal" onclick="handleOverlay(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr"><span class="modal-hdr-title" id="detail-title">Details</span><button class="modal-close" onclick="closeModal('detailModal')">×</button></div>
+    <div class="modal-body" id="detail-body"></div>
+  </div>
+</div>
+
+<!-- PROSPECT DETAIL -->
+<div class="modal-overlay" id="prospectDetailModal" onclick="handleOverlay(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr"><span class="modal-hdr-title" id="pd-title">Prospect</span><button class="modal-close" onclick="closeModal('prospectDetailModal')">×</button></div>
+    <div class="modal-body" id="pd-body"></div>
+  </div>
+</div>
+
+<!-- SNOOZE MODAL -->
+<div class="modal-overlay" id="snoozeModal" onclick="handleOverlay(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr"><span class="modal-hdr-title">Snooze Until</span><button class="modal-close" onclick="closeModal('snoozeModal')">×</button></div>
+    <div class="modal-body"><div class="snooze-grid" id="snooze-grid"></div></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settingsModal" onclick="handleOverlay(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr"><span class="modal-hdr-title">Settings</span><button class="modal-close" onclick="closeModal('settingsModal')">×</button></div>
+    <div class="modal-body">
+      <div class="fg"><label class="fl">Your Name</label><input type="text" class="fi" id="set-name" placeholder="Sean"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:14px;">
+        <span style="font-size:13px;color:var(--text2);">Zapier Connection</span>
+        <span class="webhook-badge on">Live</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:14px;">
+        <span style="font-size:13px;color:var(--text2);">Google Sheets Sync</span>
+        <span class="webhook-badge on">Connected</span>
+      </div>
+      <button class="save-btn" onclick="saveSettings()">Save Settings</button>
+      <button onclick="closeModal('settingsModal');openImport()" style="width:100%;padding:12px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--gold);background:transparent;cursor:pointer;margin-top:8px;">📥 Import from CSV</button>
+      <button class="danger-btn" onclick="clearAll()">Clear All Tasks</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-overlay" id="importModal" onclick="handleOverlay(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr"><span class="modal-hdr-title">Import from CSV</span><button class="modal-close" onclick="closeModal('importModal')">×</button></div>
+    <div class="modal-body">
+      <div class="fg">
+        <label class="fl">Import Type</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <label style="display:flex;align-items:center;gap:8px;padding:11px 14px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:var(--bg3);">
+            <input type="radio" name="import-type" id="import-type-doer" value="doer" checked onchange="switchImportType('doer')" style="accent-color:var(--green);">
+            <span style="font-size:13px;font-weight:600;color:var(--text1);">✅ Doer Tasks</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:11px 14px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);cursor:pointer;background:var(--bg3);">
+            <input type="radio" name="import-type" id="import-type-followups" value="followups" onchange="switchImportType('followups')" style="accent-color:var(--blue);">
+            <span style="font-size:13px;font-weight:600;color:var(--text1);">📞 Follow-Ups</span>
+          </label>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl">Upload CSV File</label>
+        <input type="file" accept=".csv" id="import-file" onchange="handleImportFile(this)" style="width:100%;padding:12px;border:1.5px dashed var(--border2);border-radius:var(--radius-sm);background:var(--bg3);color:var(--text2);font-size:13px;cursor:pointer;">
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;">File > Download > Comma Separated Values in Google Sheets</div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--gold);margin-bottom:8px;" id="import-status"></div>
+      <div id="import-preview" style="max-height:300px;overflow-y:auto;"></div>
+      <button class="save-btn" id="import-confirm-btn" onclick="confirmImport()" style="display:none;margin-top:10px;">Import All</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════
+const WEBHOOK_NEW      = 'https://hooks.zapier.com/hooks/catch/21472635/43idk4h/';
+const WEBHOOK_COMPLETE = 'https://hooks.zapier.com/hooks/catch/21472635/43idp8r/';
+const WEBHOOK_PROSPECT = 'https://hooks.zapier.com/hooks/catch/21472635/43i8ywd/';
+const WEBHOOK_ONGOING  = 'https://hooks.zapier.com/hooks/catch/21472635/43ik9rw/';
+const SHEETS_KEY       = 'AIzaSyBZOb31FgIpAS-osS37CL86fordN743neI';
+const SHEETS_ID        = '1F-mydndEOoQptJexuFV5edo8i1ZwQ1RtZk0ua8zpYiA';
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let tasks = [];
+let prospects = [];
+let settings = { name: 'Sean' };
+let currentScreen = 'home';
+let taskFilter = 'all';
+let prospectFilter = 'due';
+let ongoingFilter = 'active';
+let editingId = null;
+let editingProspectId = null;
+let selType_ = 'doer';
+let selPri_ = 'medium';
+let snoozeTargetId = null;
+let importPreview = [];
+let importType = 'doer';
+
+try { tasks = JSON.parse(localStorage.getItem('scw_tasks') || '[]'); } catch(e) {}
+try { prospects = JSON.parse(localStorage.getItem('scw_prospects') || '[]'); } catch(e) {}
+try { settings = {...settings,...JSON.parse(localStorage.getItem('scw_settings') || '{}')}; } catch(e) {}
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2,6); }
+function saveTasks() { localStorage.setItem('scw_tasks', JSON.stringify(tasks)); }
+function saveProspects() { localStorage.setItem('scw_prospects', JSON.stringify(prospects)); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function daysDiff(d) {
+  if (!d) return null;
+  const due = new Date(d+'T00:00:00');
+  const now = new Date(); now.setHours(0,0,0,0);
+  return Math.round((due-now)/86400000);
+}
+
+function fmtDate(due) {
+  if (!due) return 'No due date';
+  const diff = daysDiff(due);
+  if (diff < 0) return Math.abs(diff)+'d overdue';
+  if (diff === 0) return 'Due today';
+  if (diff === 1) return 'Tomorrow';
+  if (diff <= 6) return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(due+'T00:00:00').getDay()];
+  return new Date(due+'T00:00:00').toLocaleDateString('en-ZA',{day:'numeric',month:'short'});
+}
+
+function dateClass(due, done) {
+  if (done) return 'done-item';
+  if (!due) return '';
+  const d = daysDiff(due);
+  if (d < 0) return 'overdue';
+  if (d === 0) return 'due-today';
+  return '';
+}
+
+function prospectCardClass(p) {
+  if (!p.nextContact) return 'no-date';
+  const d = daysDiff(p.nextContact);
+  if (d < 0) return 'overdue';
+  if (d === 0) return 'due-today';
+  if (d <= 7) return 'upcoming';
+  return '';
+}
+
+function freqDays(f) {
+  const m = {weekly:7,biweekly:14,monthly:30,quarterly:90,'bi-annually':182,'in 2 days':2};
+  return m[(f||'monthly').toLowerCase()] || 30;
+}
+
+function addDays(dateStr, days) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr+'T00:00:00');
+  d.setDate(d.getDate()+days);
+  return d.toISOString().split('T')[0];
+}
+
+function greeting() {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+}
+
+// ══════════════════════════════════════════════
+// GOOGLE SHEETS SYNC
+// ══════════════════════════════════════════════
+async function syncAll() {
+  showSyncStatus('syncing');
+  await Promise.all([syncTasks(), syncProspects()]);
+  render();
+  showSyncStatus('done');
+}
+
+async function syncTasks() {
+  try {
+    // Fetch doer tasks from Tasks tab
+    const url1 = `https://sheets.googleapis.com/v4/spreadsheets/${SHEETS_ID}/values/Tasks!A2:J?key=${SHEETS_KEY}`;
+    const res1 = await fetch(url1);
+    const data1 = await res1.json();
+    const rows1 = data1.values || [];
+    const doerTasks = rows1.filter(r => r[2]&&r[3]).map(r => ({
+      id: r[0]||uid(), type:(r[1]||'doer').toLowerCase().trim(),
+      client:r[2]||'', task:r[3]||'',
+      due: parseSheetsDate(r[4]||''), time:r[5]||null,
+      priority:(r[6]||'medium').toLowerCase().trim(),
+      notes:r[7]||'', done:(r[8]||'').toLowerCase()==='completed',
+      created:r[9]||new Date().toISOString(), updated:new Date().toISOString()
+    }));
+
+    // Fetch ongoing cases from Ongoing Cases tab
+    // Columns: A=ID, B=Client, C=Case, D=Due Date, E=Priority, F=Notes, G=Status
+    const url2 = `https://sheets.googleapis.com/v4/spreadsheets/${SHEETS_ID}/values/Ongoing%20Cases!A2:G?key=${SHEETS_KEY}`;
+    const res2 = await fetch(url2);
+    const data2 = await res2.json();
+    const rows2 = data2.values || [];
+    const ongoingTasks = rows2.filter(r => r[1]&&r[2]).map(r => ({
+      id: r[0]||uid(), type:'ongoing',
+      client:r[1]||'', task:r[2]||'',
+      due: parseSheetsDate(r[3]||''), time:null,
+      priority:(r[4]||'medium').toLowerCase().trim(),
+      notes:r[5]||'', done:(r[6]||'').toLowerCase()==='completed',
+      created:new Date().toISOString(), updated:new Date().toISOString()
+    }));
+
+    tasks = [...doerTasks, ...ongoingTasks];
+    saveTasks();
+  } catch(e) { console.error('Task sync error',e); }
+}
+
+async function syncProspects() {
+  try {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEETS_ID}/values/Follow-Ups!A2:J?key=${SHEETS_KEY}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const rows = data.values || [];
+    if (!rows.length) return;
+    prospects = rows.filter(r => r[1]).map(r => ({
+      id:r[0]||uid(), name:r[1]||'',
+      stage:r[2]||'TBC', prospectType:r[3]||'TBC',
+      frequency:r[4]||'Monthly',
+      lastContacted:parseSheetsDate(r[5]||''),
+      nextContact:parseSheetsDate(r[6]||''),
+      notes:r[7]||'', status:r[8]||'Active',
+      created:r[9]||new Date().toISOString()
+    }));
+    saveProspects();
+  } catch(e) { console.error('Prospect sync error',e); }
+}
+
+function parseSheetsDate(str) {
+  if (!str) return null;
+  str = str.trim();
+  const m1 = str.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+  if (m1) {
+    const mo = {jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11}[m1[2].toLowerCase().substr(0,3)];
+    if (mo!==undefined) return new Date(parseInt(m1[3]),mo,parseInt(m1[1])).toISOString().split('T')[0];
+  }
+  const d = new Date(str);
+  if (!isNaN(d)) return d.toISOString().split('T')[0];
+  return null;
+}
+
+function showSyncStatus(state) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  const map = {syncing:{t:'Syncing...',c:'var(--gold)'},done:{t:'Synced ✓',c:'var(--green)'},error:{t:'Sync failed',c:'var(--red)'}};
+  const s = map[state]||map.done;
+  el.textContent = s.t; el.style.color = s.c;
+  if (state==='done') setTimeout(()=>{el.textContent='Live from Sheets';el.style.color='var(--text3)';},2000);
+}
+
+// ══════════════════════════════════════════════
+// WEBHOOK
+// ══════════════════════════════════════════════
+const COMPLETION_ACTIONS = ['completed','reopened','deleted'];
+async function fireWebhook(payload) {
+  let url;
+  if (COMPLETION_ACTIONS.includes(payload.action)) url = WEBHOOK_COMPLETE;
+  else if (payload.type === 'ongoing') url = WEBHOOK_ONGOING;
+  else url = WEBHOOK_NEW;
+  try { await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,adviser:settings.name||'Sean',timestamp:new Date().toISOString()})}); } catch(e) {}
+}
+
+async function fireProspectWebhook(payload) {
+  try { await fetch(WEBHOOK_PROSPECT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,sheetTab:'Follow-Ups',adviser:settings.name||'Sean',timestamp:new Date().toISOString()})}); } catch(e) {}
+}
+
+// ══════════════════════════════════════════════
+// NAV
+// ══════════════════════════════════════════════
+function goTo(screen, btn) {
+  currentScreen = screen;
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const screenMap = {home:'home',tasks:'tasks',doer:'tasks',followups:'followups',ongoing:'ongoing'};
+  document.getElementById('screen-'+(screenMap[screen]||screen)).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  else { const idx={home:0,tasks:1,doer:1,followups:2,ongoing:3}; document.querySelectorAll('.nav-btn')[idx[screen]||0].classList.add('active'); }
+  if (screen==='doer') { taskFilter='doer'; document.querySelectorAll('#screen-tasks .chip').forEach((c,i)=>c.classList.toggle('active',i===1)); }
+  render();
+}
+
+function fabAction() {
+  if (currentScreen==='followups') openAddProspect();
+  else if (currentScreen==='ongoing') openAddModal('ongoing');
+  else openAddModal('doer');
+}
+
+// ══════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════
+function render() {
+  renderHome();
+  renderTasks();
+  renderProspects();
+  renderOngoing();
+  updateBadges();
+}
+
+function renderHome() {
+  const openTasks = tasks.filter(t=>!t.done);
+  const dueTasks = openTasks.filter(t=>t.due&&daysDiff(t.due)<=0);
+  const dueProspects = prospects.filter(p=>p.nextContact&&daysDiff(p.nextContact)<=0);
+  const totalUrgent = dueTasks.length + dueProspects.length;
+  const sub = document.getElementById('greeting-sub');
+  if (sub) sub.innerHTML = totalUrgent>0 ? `<span>${totalUrgent} item${totalUrgent>1?'s':''}</span> need attention today` : openTasks.length>0 ? `${openTasks.length} open tasks — all on track` : 'All clear — great work';
+
+  // Hero: pick most urgent item
+  let heroTask = null; let heroProspect = null;
+  const urgentTasks = openTasks.filter(t=>t.due).sort((a,b)=>daysDiff(a.due)-daysDiff(b.due));
+  const urgentProspects = dueProspects.sort((a,b)=>(daysDiff(a.nextContact)||99)-(daysDiff(b.nextContact)||99));
+  if (urgentTasks.length) heroTask = urgentTasks[0];
+  if (urgentProspects.length && (!heroTask || daysDiff(urgentProspects[0].nextContact) < daysDiff(heroTask.due))) heroProspect = urgentProspects[0];
+
+  const hz = document.getElementById('hero-zone');
+  if (!hz) return;
+  if (heroProspect && !heroTask) {
+    const diff = daysDiff(heroProspect.nextContact);
+    hz.innerHTML = `<div class="hero-card">
+      <div class="hero-eyebrow"><span style="color:var(--gold);font-size:14px;">★</span><span style="font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:1.2px;">Top Follow-Up</span></div>
+      <div class="hero-title">${esc(heroProspect.name)}</div>
+      <div class="hero-tag">${esc(heroProspect.stage)}</div>
+      <div class="hero-meta"><div class="hero-meta-item ${diff<=0?'urgent':''}">🕐 ${fmtDate(heroProspect.nextContact)}</div><div class="hero-meta-item">🔥 ${esc(heroProspect.prospectType)}</div></div>
+      ${heroProspect.notes?`<div class="hero-task-desc">${esc(heroProspect.notes.slice(0,100))}</div>`:''}
+      <div class="hero-actions">
+        <button class="hero-btn primary" onclick="markContacted('${heroProspect.id}')">✓ Contacted</button>
+        <button class="hero-btn secondary" onclick="openProspectDetail('${heroProspect.id}')">View</button>
+        <button class="hero-btn secondary" onclick="editProspect('${heroProspect.id}')">✏️ Edit</button>
+      </div>
+    </div>`;
+  } else if (heroTask) {
+    const typeLabel = {doer:'Doer Task',ongoing:'Ongoing Case'}[heroTask.type]||'Task';
+    hz.innerHTML = `<div class="hero-card">
+      <div class="hero-eyebrow"><span style="color:var(--gold);font-size:14px;">★</span><span style="font-size:11px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:1.2px;">Top Priority</span></div>
+      <div class="hero-title">${esc(heroTask.client)}</div>
+      <div class="hero-tag">${typeLabel}</div>
+      <div class="hero-meta">${heroTask.due?`<div class="hero-meta-item ${daysDiff(heroTask.due)<=0?'urgent':''}">🕐 ${fmtDate(heroTask.due)}</div>`:''}
+        <div class="hero-meta-item">👤 ${esc(heroTask.client)}</div></div>
+      <div class="hero-task-desc">${esc(heroTask.task)}</div>
+      <div class="hero-actions">
+        <button class="hero-btn done-btn" onclick="toggleDone('${heroTask.id}')">✓ Done</button>
+        <button class="hero-btn secondary" onclick="openEdit('${heroTask.id}')">✏️ Edit</button>
+        <button class="hero-btn snooze-btn" onclick="openSnooze('${heroTask.id}')">⏰ Snooze</button>
+      </div>
+    </div>`;
+  } else {
+    hz.innerHTML = `<div class="hero-card"><div style="text-align:center;padding:20px;color:var(--text3);"><div style="font-size:32px;margin-bottom:8px;">🎯</div><div style="font-size:14px;font-weight:600;">All clear — tap + to add a task</div></div></div>`;
+  }
+
+  // Summary cards
+  const doerOpen = tasks.filter(t=>t.type==='doer'&&!t.done);
+  const doerUrgent = doerOpen.filter(t=>t.due&&daysDiff(t.due)<=0).length;
+  document.getElementById('su-do-count').textContent = doerOpen.length;
+  const dob = document.getElementById('su-do-badge'); dob.textContent=doerUrgent; dob.style.display=doerUrgent>0?'':'none';
+  document.getElementById('su-do-peek').textContent = doerOpen[0] ? doerOpen[0].client+' — '+doerOpen[0].task : 'All clear';
+
+  const fuDue = prospects.filter(p=>p.nextContact&&daysDiff(p.nextContact)<=0).length;
+  document.getElementById('su-fu-count').textContent = fuDue;
+  const fub = document.getElementById('su-fu-badge'); fub.textContent=fuDue; fub.style.display=fuDue>0?'':'none';
+  document.getElementById('su-fu-peek').textContent = urgentProspects[0] ? urgentProspects[0].name+' — '+urgentProspects[0].stage : 'No follow-ups due';
+
+  const onOpen = tasks.filter(t=>t.type==='ongoing'&&!t.done);
+  document.getElementById('su-on-count').textContent = onOpen.length;
+  const onb = document.getElementById('su-on-badge'); onb.textContent=onOpen.length; onb.style.display=onOpen.length>0?'':'none';
+  document.getElementById('su-on-peek').textContent = onOpen[0] ? onOpen[0].client+' — '+onOpen[0].task : 'No ongoing cases';
+}
+
+function taskCard(t) {
+  const dc = dateClass(t.due,t.done);
+  return `<div class="task-item ${dc}" id="card-${t.id}">
+    <div class="task-item-body" onclick="openDetail('${t.id}')">
+      <div class="task-item-top">
+        <div class="type-dot ${t.type==='doer'?'dot-doer':'dot-ongoing'}"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="task-client ${t.done?'task-done':''}" style="${t.done?'text-decoration:line-through;color:var(--text3);':''}">${esc(t.client)}</div>
+          <div class="task-desc">${esc(t.task)}</div>
+          ${t.notes?`<div class="task-notes-prev">${esc(t.notes)}</div>`:''}
+        </div>
+      </div>
+      <div class="task-meta">
+        <span class="time-chip ${!t.due?'no-date':daysDiff(t.due)<0?'overdue':daysDiff(t.due)===0?'today':'upcoming'}">${fmtDate(t.due)}</span>
+        ${t.priority!=='medium'?`<span class="pri-chip ${t.priority}">${t.priority}</span>`:''}
+      </div>
+    </div>
+    <div class="task-actions">
+      ${!t.done?`<button class="task-act-btn done" onclick="toggleDone('${t.id}')">✓ Done</button>
+      <button class="task-act-btn" onclick="openSnooze('${t.id}')">⏰</button>`
+      :`<button class="task-act-btn reopen" onclick="toggleDone('${t.id}')">↩ Reopen</button>`}
+      <button class="task-act-btn" onclick="openEdit('${t.id}')">✏️</button>
+      <button class="task-act-btn del" onclick="deleteTask('${t.id}')">🗑</button>
+    </div>
+  </div>`;
+}
+
+function sortTasks(list) {
+  return list.sort((a,b)=>{
+    if (a.done!==b.done) return a.done?1:-1;
+    const da=a.due?daysDiff(a.due):9998, db=b.due?daysDiff(b.due):9998;
+    const pa={high:0,medium:1,low:2}[a.priority]||1, pb={high:0,medium:1,low:2}[b.priority]||1;
+    return da!==db?da-db:pa-pb;
+  });
+}
+
+function renderTasks() {
+  let list = [...tasks];
+  if (taskFilter==='doer') list=list.filter(t=>t.type==='doer'&&!t.done);
+  else if (taskFilter==='ongoing') list=list.filter(t=>t.type==='ongoing'&&!t.done);
+  else if (taskFilter==='overdue') list=list.filter(t=>!t.done&&t.due&&daysDiff(t.due)<0);
+  else if (taskFilter==='today') list=list.filter(t=>!t.done&&t.due&&daysDiff(t.due)===0);
+  else if (taskFilter==='done') list=list.filter(t=>t.done);
+  else list=list.filter(t=>!t.done);
+  list=sortTasks(list);
+  const c=document.getElementById('list-tasks');
+  c.innerHTML=list.length?list.map(taskCard).join(''):emptyState('tasks');
+}
+
+function renderProspects() {
+  let list=[...prospects];
+  if (prospectFilter==='due') list=list.filter(p=>p.nextContact&&daysDiff(p.nextContact)<=0);
+  else if (prospectFilter==='hot') list=list.filter(p=>p.prospectType==='Hot');
+  else if (prospectFilter==='warm') list=list.filter(p=>p.prospectType==='Warm');
+  else if (prospectFilter==='cold') list=list.filter(p=>p.prospectType==='Cold');
+  else if (prospectFilter==='upcoming') list=list.filter(p=>p.nextContact&&daysDiff(p.nextContact)>0&&daysDiff(p.nextContact)<=14);
+
+  list.sort((a,b)=>{
+    const da=a.nextContact?daysDiff(a.nextContact):9999;
+    const db=b.nextContact?daysDiff(b.nextContact):9999;
+    const pa={Hot:0,Warm:1,Cold:2,TBC:3}[a.prospectType]||3;
+    const pb={Hot:0,Warm:1,Cold:2,TBC:3}[b.prospectType]||3;
+    return da!==db?da-db:pa-pb;
+  });
+
+  const c=document.getElementById('list-followups');
+  if (!list.length) { c.innerHTML=emptyState('followups'); return; }
+  c.innerHTML=list.map(p=>{
+    const cc=prospectCardClass(p);
+    const ptClass=(p.prospectType||'tbc').toLowerCase().replace(/\s/g,'');
+    const diff=p.nextContact?daysDiff(p.nextContact):null;
+    const chipClass=diff===null?'no-date':diff<0?'overdue':diff===0?'today':'upcoming';
+    return `<div class="prospect-card ${cc}" id="pcard-${p.id}">
+      <div class="prospect-body" onclick="openProspectDetail('${p.id}')">
+        <div class="prospect-name">${esc(p.name)}</div>
+        <div class="prospect-stage">${esc(p.stage)}</div>
+        <div class="prospect-chips">
+          <span class="pt-chip ${ptClass}">${esc(p.prospectType)}</span>
+          <span class="freq-chip">${esc(p.frequency)}</span>
+          <span class="time-chip ${chipClass}" style="font-size:10px;">${p.nextContact?fmtDate(p.nextContact):'No date'}</span>
+        </div>
+        ${p.notes?`<div class="task-notes-prev" style="margin-top:6px;">${esc(p.notes.slice(0,80))}</div>`:''}
+      </div>
+      <div class="prospect-actions">
+        <button class="prospect-act-btn contacted-btn" onclick="markContacted('${p.id}')">✓ Contacted</button>
+        <button class="prospect-act-btn" onclick="editProspect('${p.id}')">✏️ Edit</button>
+        <button class="prospect-act-btn" onclick="openSnoozeProspect('${p.id}')">⏰ Snooze</button>
+        <button class="prospect-act-btn del" onclick="deleteProspect('${p.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderOngoing() {
+  let list=tasks.filter(t=>t.type==='ongoing');
+  if (ongoingFilter==='active') list=list.filter(t=>!t.done);
+  else if (ongoingFilter==='high') list=list.filter(t=>t.priority==='high'&&!t.done);
+  else if (ongoingFilter==='done') list=list.filter(t=>t.done);
+  list=sortTasks(list);
+  const c=document.getElementById('list-ongoing');
+  c.innerHTML=list.length?list.map(taskCard).join(''):emptyState('ongoing');
+}
+
+function emptyState(type) {
+  const m={tasks:['🎯','No tasks','Add a task with +'],followups:['📞','No follow-ups due','All prospects are on track'],ongoing:['📁','No ongoing cases','Add a case with +']};
+  const [icon,title,sub]=m[type]||['📋','Nothing here',''];
+  return `<div class="empty"><span class="empty-icon">${icon}</span><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div>`;
+}
+
+function updateBadges() {
+  const urgentTasks=tasks.filter(t=>!t.done&&t.due&&daysDiff(t.due)<=0).length;
+  const urgentFu=prospects.filter(p=>p.nextContact&&daysDiff(p.nextContact)<=0).length;
+  const nb1=document.getElementById('nb-tasks'); nb1.textContent=urgentTasks; nb1.style.display=urgentTasks>0?'flex':'none';
+  const nb2=document.getElementById('nb-fu'); nb2.textContent=urgentFu; nb2.style.display=urgentFu>0?'flex':'none';
+}
+
+// ══════════════════════════════════════════════
+// FILTERS
+// ══════════════════════════════════════════════
+function setTaskFilter(f,btn) { taskFilter=f; document.querySelectorAll('#screen-tasks .chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); renderTasks(); }
+function setProspectFilter(f,btn) { prospectFilter=f; document.querySelectorAll('#screen-followups .chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); renderProspects(); }
+function setOngoingFilter(f,btn) { ongoingFilter=f; document.querySelectorAll('#screen-ongoing .chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); renderOngoing(); }
+
+// ══════════════════════════════════════════════
+// TASKS CRUD
+// ══════════════════════════════════════════════
+function openAddModal(type='doer') {
+  editingId=null; selType_=type; selPri_='medium';
+  document.getElementById('modal-title').textContent='New Task';
+  document.getElementById('save-btn-txt').textContent='Save Task';
+  document.getElementById('edit-id').value='';
+  ['in-client','in-task','in-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('in-due').value=''; document.getElementById('in-time').value='';
+  document.querySelectorAll('.type-opt').forEach(o=>o.className='type-opt'+(o.dataset.type===type?' sel-'+type:''));
+  document.querySelectorAll('.pri-opt').forEach(o=>o.className='pri-opt'+(o.dataset.p==='medium'?' sel-medium':''));
+  openModal('addModal');
+  setTimeout(()=>document.getElementById('in-client').focus(),350);
+}
+
+function openEdit(id) {
+  const t=tasks.find(x=>x.id===id); if (!t) return;
+  editingId=id; selType_=t.type; selPri_=t.priority||'medium';
+  document.getElementById('modal-title').textContent='Edit Task';
+  document.getElementById('save-btn-txt').textContent='Save Changes';
+  document.getElementById('edit-id').value=id;
+  document.getElementById('in-client').value=t.client;
+  document.getElementById('in-task').value=t.task;
+  document.getElementById('in-due').value=t.due||'';
+  document.getElementById('in-time').value=t.time||'';
+  document.getElementById('in-notes').value=t.notes||'';
+  document.querySelectorAll('.type-opt').forEach(o=>o.className='type-opt'+(o.dataset.type===t.type?' sel-'+t.type:''));
+  document.querySelectorAll('.pri-opt').forEach(o=>o.className='pri-opt'+(o.dataset.p===selPri_?' sel-'+selPri_:''));
+  closeModal('detailModal'); openModal('addModal');
+}
+
+function selType(el) { selType_=el.dataset.type; document.querySelectorAll('.type-opt').forEach(o=>o.className='type-opt'+(o.dataset.type===selType_?' sel-'+selType_:'')); }
+function selPri(el) { selPri_=el.dataset.p; document.querySelectorAll('.pri-opt').forEach(o=>o.className='pri-opt'+(o.dataset.p===selPri_?' sel-'+selPri_:'')); }
+
+async function saveTask() {
+  const client=document.getElementById('in-client').value.trim();
+  const task=document.getElementById('in-task').value.trim();
+  if (!client||!task) { showToast('Client and task are required',true); return; }
+  const btn=document.getElementById('save-btn'); btn.classList.add('loading');
+  const payload={
+    id:editingId||uid(), type:selType_, client, task,
+    due:document.getElementById('in-due').value||null,
+    time:document.getElementById('in-time').value||null,
+    priority:selPri_, notes:document.getElementById('in-notes').value.trim(),
+    done:editingId?(tasks.find(t=>t.id===editingId)?.done||false):false,
+    created:editingId?(tasks.find(t=>t.id===editingId)?.created||new Date().toISOString()):new Date().toISOString(),
+    updated:new Date().toISOString()
+  };
+  if (editingId) tasks=tasks.map(t=>t.id===editingId?payload:t);
+  else tasks.unshift(payload);
+  saveTasks();
+  await fireWebhook({...payload,action:editingId?'updated':'created'});
+  btn.classList.remove('loading');
+  closeModal('addModal'); render();
+  showToast(editingId?'Task updated':'Task saved');
+}
+
+async function toggleDone(id) {
+  const t=tasks.find(x=>x.id===id); if (!t) return;
+  t.done=!t.done; t.updated=new Date().toISOString();
+  if (t.done) t.completedAt=new Date().toISOString();
+  saveTasks();
+  await fireWebhook({...t,action:t.done?'completed':'reopened'});
+  render(); showToast(t.done?t.client+' done':'Task reopened');
+}
+
+async function deleteTask(id) {
+  if (!confirm('Delete this task?')) return;
+  const t=tasks.find(x=>x.id===id);
+  tasks=tasks.filter(x=>x.id!==id); saveTasks();
+  if (t) await fireWebhook({...t,action:'deleted'});
+  render(); showToast('Task deleted');
+}
+
+function openDetail(id) {
+  const t=tasks.find(x=>x.id===id); if (!t) return;
+  document.getElementById('detail-title').textContent=t.client;
+  document.getElementById('detail-body').innerHTML=`
+    <div class="detail-row"><span class="detail-lbl">Task</span><span class="detail-val">${esc(t.task)}</span></div>
+    <div class="detail-row"><span class="detail-lbl">Type</span><span class="detail-val" style="text-transform:capitalize">${t.type}</span></div>
+    <div class="detail-row"><span class="detail-lbl">Due</span><span class="detail-val">${fmtDate(t.due)}</span></div>
+    <div class="detail-row"><span class="detail-lbl">Priority</span><span class="detail-val" style="text-transform:capitalize">${t.priority}</span></div>
+    ${t.notes?`<div class="detail-row"><span class="detail-lbl">Notes</span><span class="detail-val">${esc(t.notes)}</span></div>`:''}
+    <div style="height:14px;"></div>
+    <button class="save-btn" onclick="openEdit('${t.id}')">✏️ Edit Task</button>
+    <button onclick="toggleDone('${t.id}');closeModal('detailModal')" style="width:100%;padding:12px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:${t.done?'var(--amber)':'var(--green)'};background:transparent;cursor:pointer;margin-top:8px;">${t.done?'↩ Reopen':'✓ Mark Complete'}</button>`;
+  openModal('detailModal');
+}
+
+// ══════════════════════════════════════════════
+// PROSPECTS CRUD
+// ══════════════════════════════════════════════
+function openAddProspect() {
+  editingProspectId=null;
+  document.getElementById('prospect-modal-title').textContent='New Follow-Up';
+  document.getElementById('p-save-txt').textContent='Save Follow-Up';
+  document.getElementById('p-edit-id').value='';
+  document.getElementById('p-name').value='';
+  document.getElementById('p-notes').value='';
+  document.getElementById('p-last').value='';
+  document.getElementById('p-next').value='';
+  document.getElementById('p-stage').value='Spoken To, Follow Up';
+  document.getElementById('p-type').value='Warm';
+  document.getElementById('p-freq').value='Monthly';
+  openModal('prospectModal');
+  setTimeout(()=>document.getElementById('p-name').focus(),350);
+}
+
+function editProspect(id) {
+  const p=prospects.find(x=>x.id===id); if (!p) return;
+  editingProspectId=id;
+  document.getElementById('prospect-modal-title').textContent='Edit Follow-Up';
+  document.getElementById('p-save-txt').textContent='Save Changes';
+  document.getElementById('p-edit-id').value=id;
+  document.getElementById('p-name').value=p.name||'';
+  document.getElementById('p-stage').value=p.stage||'TBC';
+  document.getElementById('p-type').value=p.prospectType||'Warm';
+  document.getElementById('p-freq').value=p.frequency||'Monthly';
+  document.getElementById('p-last').value=p.lastContacted||'';
+  document.getElementById('p-next').value=p.nextContact||'';
+  document.getElementById('p-notes').value=p.notes||'';
+  closeModal('prospectDetailModal'); openModal('prospectModal');
+}
+
+async function saveProspect() {
+  const name=document.getElementById('p-name').value.trim();
+  if (!name) { showToast('Name is required',true); return; }
+  const btn=document.getElementById('p-save-btn'); btn.classList.add('loading');
+  const lastC=document.getElementById('p-last').value||null;
+  const freq=document.getElementById('p-freq').value;
+  let nextC=document.getElementById('p-next').value||null;
+  if (!nextC && lastC) nextC=addDays(lastC,freqDays(freq));
+  const payload={
+    id:editingProspectId||uid(), name,
+    stage:document.getElementById('p-stage').value,
+    prospectType:document.getElementById('p-type').value,
+    frequency:freq, lastContacted:lastC, nextContact:nextC,
+    notes:document.getElementById('p-notes').value.trim(),
+    status:'Active',
+    created:editingProspectId?(prospects.find(p=>p.id===editingProspectId)?.created||new Date().toISOString()):new Date().toISOString()
+  };
+  if (editingProspectId) prospects=prospects.map(p=>p.id===editingProspectId?payload:p);
+  else prospects.unshift(payload);
+  saveProspects();
+  await fireProspectWebhook({...payload,action:editingProspectId?'prospect_updated':'prospect_created'});
+  btn.classList.remove('loading');
+  closeModal('prospectModal'); render();
+  showToast(editingProspectId?'Updated':'Follow-up saved');
+}
+
+async function markContacted(id) {
+  const p=prospects.find(x=>x.id===id); if (!p) return;
+  const today=todayStr();
+  p.lastContacted=today;
+  p.nextContact=addDays(today,freqDays(p.frequency));
+  saveProspects();
+  await fireProspectWebhook({...p,action:'prospect_contacted'});
+  render(); showToast(p.name+' — next contact set to '+fmtDate(p.nextContact));
+}
+
+async function deleteProspect(id) {
+  if (!confirm('Remove this prospect?')) return;
+  prospects=prospects.filter(x=>x.id!==id); saveProspects();
+  render(); showToast('Prospect removed');
+}
+
+let snoozeProspectId=null;
+function openSnoozeProspect(id) { snoozeProspectId=id; snoozeTargetId=null; buildSnoozeGrid('prospect'); openModal('snoozeModal'); }
+
+function openProspectDetail(id) {
+  const p=prospects.find(x=>x.id===id); if (!p) return;
+  document.getElementById('pd-title').textContent=p.name;
+  document.getElementById('pd-body').innerHTML=`
+    <div class="detail-row"><span class="detail-lbl">Stage</span><span class="detail-val">${esc(p.stage)}</span></div>
+    <div class="detail-row"><span class="detail-lbl">Type</span><span class="detail-val">${esc(p.prospectType)}</span></div>
+    <div class="detail-row"><span class="detail-lbl">Frequency</span><span class="detail-val">${esc(p.frequency)}</span></div>
+    <div class="detail-row"><span class="detail-lbl">Last Contacted</span><span class="detail-val">${p.lastContacted||'Not yet'}</span></div>
+    <div class="detail-row"><span class="detail-lbl">Next Contact</span><span class="detail-val">${fmtDate(p.nextContact)}</span></div>
+    ${p.notes?`<div class="detail-row"><span class="detail-lbl">Notes</span><span class="detail-val">${esc(p.notes)}</span></div>`:''}
+    <div style="height:14px;"></div>
+    <button class="save-btn" onclick="markContacted('${p.id}');closeModal('prospectDetailModal')">✓ Mark as Contacted</button>
+    <button onclick="editProspect('${p.id}')" style="width:100%;padding:12px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:var(--gold);background:transparent;cursor:pointer;margin-top:8px;">✏️ Edit</button>`;
+  openModal('prospectDetailModal');
+}
+
+// ══════════════════════════════════════════════
+// SNOOZE
+// ══════════════════════════════════════════════
+function openSnooze(id) { snoozeTargetId=id; snoozeProspectId=null; buildSnoozeGrid('task'); openModal('snoozeModal'); }
+
+function buildSnoozeGrid(type) {
+  const opts=[['Tomorrow',1],['In 2 days',2],['This Friday','friday'],['Next Monday','monday'],['In 1 week',7],['In 2 weeks',14]];
+  document.getElementById('snooze-grid').innerHTML=opts.map(([l,v])=>`<div class="snooze-opt" onclick="applySnooze('${v}','${type}')">${l}</div>`).join('');
+}
+
+function applySnooze(val,type) {
+  const d=new Date(); d.setHours(0,0,0,0);
+  if (val==='friday') { const day=d.getDay(); d.setDate(d.getDate()+((5-day+7)%7||7)); }
+  else if (val==='monday') { const day=d.getDay(); d.setDate(d.getDate()+((8-day)%7||7)); }
+  else d.setDate(d.getDate()+parseInt(val));
+  const newDate=d.toISOString().split('T')[0];
+  if (type==='task' && snoozeTargetId) {
+    const t=tasks.find(x=>x.id===snoozeTargetId); if (t) { t.due=newDate; t.updated=new Date().toISOString(); saveTasks(); fireWebhook({...t,action:'snoozed'}); }
+  } else if (type==='prospect' && snoozeProspectId) {
+    const p=prospects.find(x=>x.id===snoozeProspectId); if (p) { p.nextContact=newDate; saveProspects(); fireProspectWebhook({...p,action:'prospect_snoozed'}); }
+  }
+  closeModal('snoozeModal'); render(); showToast('Snoozed to '+fmtDate(newDate));
+}
+
+// ══════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════
+function openSettings() {
+  document.getElementById('set-name').value=settings.name||'';
+  openModal('settingsModal');
+}
+function saveSettings() {
+  settings.name=document.getElementById('set-name').value.trim();
+  localStorage.setItem('scw_settings',JSON.stringify(settings));
+  closeModal('settingsModal'); showToast('Settings saved');
+}
+function clearAll() {
+  if (!confirm('Delete ALL tasks and prospects?')) return;
+  tasks=[]; prospects=[]; saveTasks(); saveProspects();
+  closeModal('settingsModal'); render(); showToast('All data cleared');
+}
+
+// ══════════════════════════════════════════════
+// IMPORT
+// ══════════════════════════════════════════════
+function openImport() { importPreview=[]; document.getElementById('import-preview').innerHTML=''; document.getElementById('import-file').value=''; document.getElementById('import-status').textContent=''; document.getElementById('import-confirm-btn').style.display='none'; openModal('importModal'); }
+
+function parseCSV(text) {
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim().toLowerCase());
+  const rows=[];
+  for (let i=1;i<lines.length;i++) {
+    const vals=[]; let cur=''; let inQ=false;
+    for (let c of lines[i]) { if (c==='"') inQ=!inQ; else if (c===','&&!inQ) {vals.push(cur.trim());cur='';} else cur+=c; }
+    vals.push(cur.trim());
+    const row={}; headers.forEach((h,idx)=>row[h]=(vals[idx]||'').replace(/^"|"$/g,'').trim()); rows.push(row);
+  }
+  return rows;
+}
+
+function parseDateStr(str) {
+  if (!str) return null; str=str.trim();
+  const m1=str.match(/(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+  if (m1) { const mo={jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11}[m1[2].toLowerCase().substr(0,3)]; if (mo!==undefined) return new Date(parseInt(m1[3]),mo,parseInt(m1[1])).toISOString().split('T')[0]; }
+  const d=new Date(str); if (!isNaN(d)) return d.toISOString().split('T')[0]; return null;
+}
+
+function handleImportFile(input) {
+  const file=input.files[0]; if (!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const rows=parseCSV(e.target.result);
+    const headers=Object.keys(rows[0]||{}).join(', ');
+    if (headers.includes('task description')||headers.includes('task due date')) { importType='doer'; document.getElementById('import-type-doer').checked=true; }
+    else if (headers.includes('next contact date')||headers.includes('first name')) { importType='followups'; document.getElementById('import-type-followups').checked=true; }
+    buildImportPreview(rows);
+  };
+  reader.readAsText(file);
+}
+
+function buildImportPreview(rows) {
+  importPreview=[];
+  if (importType==='doer') {
+    rows.forEach(r=>{
+      const client=r['client / prospect']||r['client']||'';
+      const task=r['task description']||r['task']||'';
+      const due=parseDateStr(r['task due date']||r['due date']||'');
+      const pri=(r['priority']||'medium').toLowerCase();
+      if (!client||client.toLowerCase()==='n/a'||!task) return;
+      importPreview.push({importType:'task',type:'doer',client,task,due,priority:['high','medium','low'].includes(pri)?pri:'medium',notes:r['estimated duration']||''});
+    });
+  } else {
+    rows.forEach(r=>{
+      const name=((r['first name']||'')+ ' '+(r['surname']||'')).trim();
+      if (!name) return;
+      const stage=r['stage']||'TBC';
+      const nextC=parseDateStr(r['next contact date']||'');
+      const lastC=parseDateStr(r['last contacted']||'');
+      const freq=r['contact frequency']||'Monthly';
+      const pt=r['prospect type']||'TBC';
+      const notes=((r['notes from last interaction']||'')+'|'+(r['important notes']||'')).replace(/^\||\|$/g,'').trim().slice(0,300);
+      importPreview.push({importType:'prospect',name,stage,prospectType:pt,frequency:freq,lastContacted:lastC,nextContact:nextC,notes,status:'Active'});
+    });
+  }
+  renderImportPreview();
+}
+
+function renderImportPreview() {
+  const c=document.getElementById('import-preview');
+  document.getElementById('import-status').textContent=importPreview.length+' ready to import';
+  document.getElementById('import-confirm-btn').style.display=importPreview.length?'block':'none';
+  if (!importPreview.length) { c.innerHTML='<div style="color:var(--text3);font-size:13px;padding:12px;text-align:center;">No valid rows found.</div>'; return; }
+  c.innerHTML=importPreview.map((t,i)=>`
+    <div style="background:var(--bg3);border-radius:8px;padding:11px;margin-bottom:7px;border-left:3px solid ${t.importType==='task'?'var(--green)':'var(--blue)'};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:var(--text1);">${esc(t.name||t.client)}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(t.task||t.stage||'')}</div>
+          <div style="font-size:11px;color:var(--gold);margin-top:3px;">${(t.due||t.nextContact)?'Due: '+(t.due||t.nextContact):'No date'}</div>
+        </div>
+        <button onclick="importPreview.splice(${i},1);renderImportPreview()" style="background:var(--red-dim);border:none;color:var(--red);border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;flex-shrink:0;">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function switchImportType(type) { importType=type; const f=document.getElementById('import-file'); if (f.files[0]) { const r=new FileReader(); r.onload=e=>buildImportPreview(parseCSV(e.target.result)); r.readAsText(f.files[0]); } }
+
+async function confirmImport() {
+  if (!importPreview.length) return;
+  const btn=document.getElementById('import-confirm-btn'); btn.textContent='Importing...'; btn.style.opacity='0.6'; btn.style.pointerEvents='none';
+  for (const item of importPreview) {
+    if (item.importType==='task') {
+      const t={id:uid(),type:'doer',client:item.client,task:item.task,due:item.due||null,time:null,priority:item.priority||'medium',notes:item.notes||'',done:false,created:new Date().toISOString(),updated:new Date().toISOString()};
+      tasks.unshift(t); await fireWebhook({...t,action:'created'});
+    } else {
+      const p={id:uid(),name:item.name,stage:item.stage||'TBC',prospectType:item.prospectType||'TBC',frequency:item.frequency||'Monthly',lastContacted:item.lastContacted||null,nextContact:item.nextContact||null,notes:item.notes||'',status:'Active',created:new Date().toISOString()};
+      prospects.unshift(p); await fireProspectWebhook({...p,action:'prospect_created'});
+    }
+  }
+  saveTasks(); saveProspects(); render(); closeModal('importModal');
+  showToast(importPreview.length+' items imported');
+}
+
+// ══════════════════════════════════════════════
+// MODALS
+// ══════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow=''; }
+function handleOverlay(e) { if (e.target.classList.contains('modal-overlay')) closeModal(e.target.id); }
+
+// TOAST
+let toastT;
+function showToast(msg,err=false) {
+  const t=document.getElementById('toast'); t.textContent=(err?'✕  ':'✓  ')+msg; t.className='toast show';
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// GREETING
+function updateGreeting() {
+  const el=document.getElementById('greeting-time');
+  if (el) el.textContent=new Date().toLocaleDateString('en-ZA',{weekday:'long',day:'numeric',month:'long'});
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+updateGreeting();
+render();
+syncAll();
+</script>
+</body>
+</html>
