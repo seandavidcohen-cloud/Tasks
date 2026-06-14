@@ -492,6 +492,7 @@ const WEBHOOK_COMPLETE = 'https://hooks.zapier.com/hooks/catch/21472635/43idp8r/
 const WEBHOOK_PROSPECT = 'https://hooks.zapier.com/hooks/catch/21472635/43i8ywd/';
 const WEBHOOK_ONGOING  = 'https://hooks.zapier.com/hooks/catch/21472635/43ik9rw/';
 const WEBHOOK_CONTACTED = 'https://hooks.zapier.com/hooks/catch/21472635/43ifgjt/';
+const WEBHOOK_ONGOING_COMPLETE = 'https://hooks.zapier.com/hooks/catch/21472635/43iaudj/';
 const SHEETS_KEY       = 'AIzaSyBZOb31FgIpAS-osS37CL86fordN743neI';
 const SHEETS_ID        = '1F-mydndEOoQptJexuFV5edo8i1ZwQ1RtZk0ua8zpYiA';
 
@@ -677,7 +678,8 @@ function showSyncStatus(state) {
 const COMPLETION_ACTIONS = ['completed','reopened','deleted'];
 async function fireWebhook(payload) {
   let url;
-  if (COMPLETION_ACTIONS.includes(payload.action)) url = WEBHOOK_COMPLETE;
+  if (COMPLETION_ACTIONS.includes(payload.action) && payload.type === 'ongoing') url = WEBHOOK_ONGOING_COMPLETE;
+  else if (COMPLETION_ACTIONS.includes(payload.action)) url = WEBHOOK_COMPLETE;
   else if (payload.type === 'ongoing') url = WEBHOOK_ONGOING;
   else url = WEBHOOK_NEW;
   try { await fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,adviser:settings.name||'Sean',timestamp:new Date().toISOString()})}); } catch(e) {}
