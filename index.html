@@ -6,6 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="SCW">
+<meta name="apple-touch-startup-image" content="">
 <meta name="theme-color" content="#0d1520">
 <title>SCW Task Manager</title>
 <style>
@@ -37,13 +38,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
 
 .scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 
+/* LOGO */
+.app-logo{flex-shrink:0;filter:drop-shadow(0 2px 8px rgba(201,168,76,0.3));}
+.greeting-name{font-size:22px;font-weight:700;color:var(--text1);letter-spacing:-0.3px;margin:0;}
+
 /* HOME */
 .home-header{padding:52px 20px 16px;}
 .greeting-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
-.greeting-time{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;}
-.sync-btn{background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;cursor:pointer;}
-.sync-status{font-size:10px;color:var(--text3);margin-bottom:4px;}
-.greeting-name{font-size:26px;font-weight:700;color:var(--text1);letter-spacing:-0.5px;margin-bottom:3px;}
+.greeting-row{display:flex;justify-content:space-between;align-items:flex-start;}
+.greeting-time{font-size:11px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+.sync-btn{background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:11px;font-weight:700;padding:6px 14px;border-radius:20px;cursor:pointer;flex-shrink:0;margin-left:12px;}
+.sync-status{font-size:10px;color:var(--text3);}
+.greeting-name{font-size:26px;font-weight:700;color:var(--text1);letter-spacing:-0.5px;margin:10px 0 3px;}
 .greeting-sub{font-size:13px;color:var(--text2);}
 .greeting-sub span{color:var(--gold);font-weight:600;}
 
@@ -211,6 +217,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
 .toast{position:fixed;bottom:98px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--bg3);color:var(--text1);padding:10px 18px;border-radius:30px;font-size:13px;font-weight:600;z-index:500;border:1px solid var(--border2);box-shadow:0 8px 32px rgba(0,0,0,0.4);opacity:0;transition:all 0.25s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+
+/* SEARCH */
+.search-bar-wrap{padding:12px 16px 0;position:relative;}
+.search-bar{width:100%;padding:10px 14px 10px 38px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:30px;font-size:14px;color:var(--text1);outline:none;font-family:inherit;-webkit-appearance:none;}
+.search-bar::placeholder{color:var(--text3);}
+.search-bar:focus{border-color:var(--gold);}
+.search-icon{position:absolute;left:28px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:15px;pointer-events:none;}
+.sort-row{display:flex;align-items:center;gap:8px;padding:8px 16px 0;overflow-x:auto;scrollbar-width:none;}
+.sort-row::-webkit-scrollbar{display:none;}
+.sort-btn{flex-shrink:0;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;font-size:11px;font-weight:700;color:var(--text3);cursor:pointer;white-space:nowrap;transition:all 0.12s;letter-spacing:0.3px;}
+.sort-btn.active{background:var(--bg3);color:var(--gold);border-color:rgba(201,168,76,0.4);}
+
 /* SETTINGS */
 .webhook-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:10px;}
 .webhook-badge.on{background:var(--green-dim);color:var(--green);}
@@ -223,11 +241,42 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
   <div class="scroll-area">
     <div class="home-header">
       <div class="greeting-row">
-        <div class="greeting-time" id="greeting-time"></div>
+        <div>
+          <div class="greeting-time" id="greeting-time"></div>
+          <div class="sync-status" id="sync-status">Live from Sheets</div>
+        </div>
         <button class="sync-btn" onclick="syncAll()">↻ Sync</button>
       </div>
-      <div class="sync-status" id="sync-status">Live from Sheets</div>
-      <div class="greeting-name">Good morning, Sean</div>
+      <div style="display:flex;align-items:center;gap:14px;margin:12px 0 4px;">
+        <div class="app-logo">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="48" height="48" rx="12" fill="#1A2332"/>
+            <rect width="48" height="48" rx="12" fill="url(#logo-grad)" opacity="0.6"/>
+            <!-- Diamond mark -->
+            <path d="M24 8 L36 24 L24 40 L12 24 Z" fill="none" stroke="url(#gold-grad)" stroke-width="1.5" opacity="0.4"/>
+            <path d="M24 13 L32 24 L24 35 L16 24 Z" fill="none" stroke="url(#gold-grad)" stroke-width="1.5" opacity="0.7"/>
+            <!-- SC letters -->
+            <text x="24" y="28" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="13" font-weight="800" fill="url(#gold-grad)" letter-spacing="-0.5">SC</text>
+            <!-- Top accent line -->
+            <line x1="16" y1="7" x2="32" y2="7" stroke="url(#gold-grad)" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+            <defs>
+              <linearGradient id="logo-grad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#1f3248"/>
+                <stop offset="100%" stop-color="#0d1520"/>
+              </linearGradient>
+              <linearGradient id="gold-grad" x1="12" y1="8" x2="36" y2="40" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#f0d898"/>
+                <stop offset="50%" stop-color="#C9A84C"/>
+                <stop offset="100%" stop-color="#a8842a"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div>
+          <div class="greeting-name" id="greeting-name">Good morning, Sean</div>
+          <div style="font-size:11px;color:var(--gold);font-weight:600;letter-spacing:0.5px;text-transform:uppercase;margin-top:1px;">Sean Cohen Wealth</div>
+        </div>
+      </div>
       <div class="greeting-sub" id="greeting-sub">Loading your day...</div>
     </div>
     <div id="hero-zone"></div>
@@ -269,6 +318,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
       <button class="chip" onclick="setTaskFilter('today',this)">Today</button>
       <button class="chip" onclick="setTaskFilter('done',this)">Completed</button>
     </div>
+    <div class="search-bar-wrap" style="padding-top:10px;">
+      <span class="search-icon">🔍</span>
+      <input class="search-bar" type="search" placeholder="Search client or task..." id="search-tasks" oninput="renderTasks()" autocomplete="off">
+    </div>
+    <div class="sort-row">
+      <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0;">Sort:</span>
+      <button class="sort-btn active" onclick="setTaskSort('due',this)">Due Date</button>
+      <button class="sort-btn" onclick="setTaskSort('priority',this)">Priority</button>
+      <button class="sort-btn" onclick="setTaskSort('client',this)">Client A-Z</button>
+      <button class="sort-btn" onclick="setTaskSort('recent',this)">Recently Added</button>
+    </div>
   </div>
   <div class="scroll-area"><div class="task-list" id="list-tasks"></div></div>
 </div>
@@ -288,6 +348,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
       <button class="chip" onclick="setProspectFilter('cold',this)">Cold</button>
       <button class="chip" onclick="setProspectFilter('upcoming',this)">Upcoming</button>
     </div>
+    <div class="search-bar-wrap" style="padding-top:10px;">
+      <span class="search-icon">🔍</span>
+      <input class="search-bar" type="search" placeholder="Search prospect name or stage..." id="search-followups" oninput="renderProspects()" autocomplete="off">
+    </div>
+    <div class="sort-row">
+      <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0;">Sort:</span>
+      <button class="sort-btn active" onclick="setProspectSort('due',this)">Due Date</button>
+      <button class="sort-btn" onclick="setProspectSort('name',this)">Name A-Z</button>
+      <button class="sort-btn" onclick="setProspectSort('type',this)">Hot First</button>
+      <button class="sort-btn" onclick="setProspectSort('freq',this)">Frequency</button>
+    </div>
   </div>
   <div class="scroll-area"><div class="task-list" id="list-followups"></div></div>
 </div>
@@ -305,13 +376,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
       <button class="chip" onclick="setOngoingFilter('high',this)">High Priority</button>
       <button class="chip" onclick="setOngoingFilter('done',this)">Completed</button>
     </div>
+    <div class="search-bar-wrap" style="padding-top:10px;">
+      <span class="search-icon">🔍</span>
+      <input class="search-bar" type="search" placeholder="Search client or case..." id="search-ongoing" oninput="renderOngoing()" autocomplete="off">
+    </div>
+    <div class="sort-row">
+      <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0;">Sort:</span>
+      <button class="sort-btn active" onclick="setOngoingSort('due',this)">Due Date</button>
+      <button class="sort-btn" onclick="setOngoingSort('priority',this)">Priority</button>
+      <button class="sort-btn" onclick="setOngoingSort('client',this)">Client A-Z</button>
+    </div>
   </div>
   <div class="scroll-area"><div class="task-list" id="list-ongoing"></div></div>
 </div>
 
 <!-- NAV -->
 <nav class="bottom-nav">
-  <button class="nav-btn active" onclick="goTo('home',this)"><span class="nav-icon">🏠</span>Home</button>
+  <button class="nav-btn active" onclick="goTo('home',this)">
+    <svg width="22" height="22" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:-2px">
+      <rect width="48" height="48" rx="10" fill="#1A2332"/>
+      <path d="M24 10 L34 24 L24 38 L14 24 Z" fill="none" stroke="#C9A84C" stroke-width="2" opacity="0.5"/>
+      <text x="24" y="28" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="13" font-weight="800" fill="#C9A84C">SC</text>
+    </svg>
+    Home</button>
   <button class="nav-btn" onclick="goTo('tasks',this)"><span class="nav-icon">✅</span>Tasks<span class="nav-badge" id="nb-tasks" style="display:none"></span></button>
   <button class="nav-btn" onclick="goTo('followups',this)"><span class="nav-icon">📞</span>Follow-Ups<span class="nav-badge" id="nb-fu" style="display:none"></span></button>
   <button class="nav-btn" onclick="goTo('ongoing',this)"><span class="nav-icon">📁</span>Cases<span class="nav-badge" id="nb-on" style="display:none"></span></button>
@@ -506,6 +593,9 @@ let currentScreen = 'home';
 let taskFilter = 'all';
 let prospectFilter = 'due';
 let ongoingFilter = 'active';
+let taskSort = 'due';
+let prospectSort = 'due';
+let ongoingSort = 'due';
 let editingId = null;
 let editingProspectId = null;
 let selType_ = 'doer';
@@ -833,7 +923,14 @@ function renderTasks() {
   else if (taskFilter==='today') list=list.filter(t=>!t.done&&t.due&&daysDiff(t.due)===0);
   else if (taskFilter==='done') list=list.filter(t=>t.done);
   else list=list.filter(t=>!t.done);
-  list=sortTasks(list);
+  // Search
+  const q=(document.getElementById('search-tasks')||{}).value||'';
+  if (q.trim()) { const ql=q.toLowerCase(); list=list.filter(t=>(t.client||'').toLowerCase().includes(ql)||(t.task||'').toLowerCase().includes(ql)||(t.notes||'').toLowerCase().includes(ql)); }
+  // Sort
+  if (taskSort==='priority') list.sort((a,b)=>{const p={high:0,medium:1,low:2}; return (p[a.priority]||1)-(p[b.priority]||1);});
+  else if (taskSort==='client') list.sort((a,b)=>(a.client||'').localeCompare(b.client||''));
+  else if (taskSort==='recent') list.sort((a,b)=>new Date(b.created||0)-new Date(a.created||0));
+  else list=sortTasks(list);
   const c=document.getElementById('list-tasks');
   c.innerHTML=list.length?list.map(taskCard).join(''):emptyState('tasks');
 }
@@ -845,8 +942,14 @@ function renderProspects() {
   else if (prospectFilter==='warm') list=list.filter(p=>p.prospectType==='Warm');
   else if (prospectFilter==='cold') list=list.filter(p=>p.prospectType==='Cold');
   else if (prospectFilter==='upcoming') list=list.filter(p=>p.nextContact&&daysDiff(p.nextContact)>0&&daysDiff(p.nextContact)<=14);
-
-  list.sort((a,b)=>{
+  // Search
+  const q=(document.getElementById('search-followups')||{}).value||'';
+  if (q.trim()) { const ql=q.toLowerCase(); list=list.filter(p=>(p.name||'').toLowerCase().includes(ql)||(p.stage||'').toLowerCase().includes(ql)||(p.notes||'').toLowerCase().includes(ql)); }
+  // Sort
+  if (prospectSort==='name') list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  else if (prospectSort==='type') list.sort((a,b)=>{const p={Hot:0,Warm:1,Cold:2,TBC:3}; return (p[a.prospectType]||3)-(p[b.prospectType]||3);});
+  else if (prospectSort==='freq') list.sort((a,b)=>(a.frequency||'').localeCompare(b.frequency||''));
+  else list.sort((a,b)=>{
     const da=a.nextContact?daysDiff(a.nextContact):9999;
     const db=b.nextContact?daysDiff(b.nextContact):9999;
     const pa={Hot:0,Warm:1,Cold:2,TBC:3}[a.prospectType]||3;
@@ -887,7 +990,13 @@ function renderOngoing() {
   if (ongoingFilter==='active') list=list.filter(t=>!t.done);
   else if (ongoingFilter==='high') list=list.filter(t=>t.priority==='high'&&!t.done);
   else if (ongoingFilter==='done') list=list.filter(t=>t.done);
-  list=sortTasks(list);
+  // Search
+  const q=(document.getElementById('search-ongoing')||{}).value||'';
+  if (q.trim()) { const ql=q.toLowerCase(); list=list.filter(t=>(t.client||'').toLowerCase().includes(ql)||(t.task||'').toLowerCase().includes(ql)||(t.notes||'').toLowerCase().includes(ql)); }
+  // Sort
+  if (ongoingSort==='priority') list.sort((a,b)=>{const p={high:0,medium:1,low:2}; return (p[a.priority]||1)-(p[b.priority]||1);});
+  else if (ongoingSort==='client') list.sort((a,b)=>(a.client||'').localeCompare(b.client||''));
+  else list=sortTasks(list);
   const c=document.getElementById('list-ongoing');
   c.innerHTML=list.length?list.map(taskCard).join(''):emptyState('ongoing');
 }
@@ -908,6 +1017,10 @@ function updateBadges() {
 // ══════════════════════════════════════════════
 // FILTERS
 // ══════════════════════════════════════════════
+function setTaskSort(s,btn) { taskSort=s; document.querySelectorAll('#screen-tasks .sort-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderTasks(); }
+function setProspectSort(s,btn) { prospectSort=s; document.querySelectorAll('#screen-followups .sort-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderProspects(); }
+function setOngoingSort(s,btn) { ongoingSort=s; document.querySelectorAll('#screen-ongoing .sort-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); renderOngoing(); }
+
 function setTaskFilter(f,btn) { taskFilter=f; document.querySelectorAll('#screen-tasks .chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); renderTasks(); }
 function setProspectFilter(f,btn) { prospectFilter=f; document.querySelectorAll('#screen-followups .chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); renderProspects(); }
 function setOngoingFilter(f,btn) { ongoingFilter=f; document.querySelectorAll('#screen-ongoing .chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); renderOngoing(); }
