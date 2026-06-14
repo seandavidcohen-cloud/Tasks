@@ -73,7 +73,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
 
 /* SUMMARY GRID */
 .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px;}
-.summary-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:border-color 0.15s;}
+.summary-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:border-color 0.15s;min-width:0;overflow:hidden;}
 .summary-card:active{border-color:var(--gold);}
 .summary-card.full{grid-column:span 2;}
 .summary-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
@@ -160,6 +160,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
 /* FAB */
 .fab{position:fixed;bottom:86px;right:20px;width:54px;height:54px;border-radius:50%;background:var(--gold);border:none;font-size:26px;color:var(--bg);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(201,168,76,0.4);cursor:pointer;z-index:99;transition:transform 0.15s;}
 .fab:active{transform:scale(0.93);}
+
+/* MIC FAB (voice-to-task) */
+.mic-fab{position:fixed;bottom:148px;right:20px;width:48px;height:48px;border-radius:50%;background:var(--bg3);border:1.5px solid rgba(201,168,76,0.4);font-size:20px;color:var(--gold);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,0.4);cursor:pointer;z-index:99;transition:transform 0.15s;}
+.mic-fab:active{transform:scale(0.9);}
+.mic-fab.listening{background:var(--red);color:#fff;border-color:var(--red);animation:micPulse 1.2s ease-in-out infinite;}
+@keyframes micPulse{0%,100%{box-shadow:0 0 0 0 rgba(224,85,85,0.5);}50%{box-shadow:0 0 0 10px rgba(224,85,85,0);}}
 
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(5,10,18,0.85);z-index:200;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.2s;backdrop-filter:blur(4px);}
@@ -404,6 +410,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
   <button class="nav-btn" onclick="goTo('ongoing',this)"><span class="nav-icon">📁</span>Cases<span class="nav-badge" id="nb-on" style="display:none"></span></button>
 </nav>
 
+<button class="mic-fab" id="mic-fab" onclick="startVoiceCapture()" title="Dictate a task" aria-label="Dictate a task">🎤</button>
 <button class="fab" id="fab" onclick="fabAction()">+</button>
 
 <!-- ADD TASK MODAL -->
@@ -522,6 +529,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
     <div class="modal-hdr"><span class="modal-hdr-title">Settings</span><button class="modal-close" onclick="closeModal('settingsModal')">×</button></div>
     <div class="modal-body">
       <div class="fg"><label class="fl">Your Name</label><input type="text" class="fi" id="set-name" placeholder="Sean"></div>
+      <div class="fg">
+        <label class="fl">Draft Email Webhook (Zapier)</label>
+        <input type="url" class="fi" id="set-draft-webhook" placeholder="https://hooks.zapier.com/hooks/catch/..." autocomplete="off" inputmode="url" style="font-size:12px;">
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;">Paste the Catch Hook URL of the Zap that drafts follow-up emails with AI by Zapier and saves them to Gmail.</div>
+      </div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:14px;">
         <span style="font-size:13px;color:var(--text2);">Zapier Connection</span>
         <span class="webhook-badge on">Live</span>
@@ -581,37 +593,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',sa
     <div class="modal-body">
       <div id="draft-loading" style="text-align:center;padding:32px 0;">
         <div style="font-size:32px;margin-bottom:12px;">✍️</div>
-        <div style="font-size:14px;font-weight:600;color:var(--text1);margin-bottom:6px;">Drafting your message...</div>
-        <div style="font-size:12px;color:var(--text3);">Claude is personalising this for you</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text1);margin-bottom:6px;">Sending to Zapier...</div>
+        <div style="font-size:12px;color:var(--text3);">AI by Zapier is drafting this & saving it to your Gmail</div>
         <div style="margin-top:16px;height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;">
           <div id="draft-progress" style="height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:2px;width:0%;transition:width 2s ease;"></div>
         </div>
       </div>
-      <div id="draft-content" style="display:none;">
-        <div style="margin-bottom:10px;">
-          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">To</div>
-          <div style="font-size:14px;font-weight:600;color:var(--text1);" id="draft-to"></div>
-        </div>
-        <div style="margin-bottom:10px;">
-          <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">Subject</div>
-          <input type="text" class="fi" id="draft-subject" style="font-size:13px;padding:9px 12px;">
-        </div>
-        <div style="margin-bottom:14px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-            <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;">Message</div>
-            <button onclick="redraftMessage()" style="background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);color:var(--gold);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;cursor:pointer;">↺ Redraft</button>
-          </div>
-          <textarea class="fta" id="draft-body" style="height:220px;font-size:13px;line-height:1.6;padding:12px;"></textarea>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="copyDraft()" style="flex:1;padding:13px;background:var(--bg3);border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:var(--text1);cursor:pointer;">📋 Copy</button>
-          <button onclick="sendDraftEmail()" style="flex:1;padding:13px;background:var(--gold);border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:var(--bg);cursor:pointer;">✉️ Open in Mail</button>
-        </div>
-        <button onclick="logContactedFromDraft()" style="width:100%;padding:12px;border:1.5px solid var(--green-dim);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--green);background:transparent;cursor:pointer;margin-top:8px;">✓ Mark as Contacted After Sending</button>
+      <div id="draft-content" style="display:none;text-align:center;padding:8px 0 4px;">
+        <div style="font-size:34px;margin-bottom:10px;">📨</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text1);margin-bottom:6px;">Sent to Zapier</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:16px;" id="draft-sent-msg">Zapier is drafting a personalised follow-up and saving it to your Gmail drafts.</div>
+        <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;text-align:left;margin-bottom:16px;" id="draft-recap"></div>
+        <button onclick="logContactedFromDraft()" style="width:100%;padding:13px;background:var(--green-dim);border:1.5px solid rgba(58,173,117,0.4);border-radius:var(--radius-sm);font-size:14px;font-weight:700;color:var(--green);cursor:pointer;">✓ Mark as Contacted</button>
+        <button onclick="closeModal('draftModal')" style="width:100%;padding:12px;border:1.5px solid var(--border2);border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--text2);background:transparent;cursor:pointer;margin-top:8px;">Done</button>
       </div>
       <div id="draft-error" style="display:none;text-align:center;padding:24px;">
         <div style="font-size:24px;margin-bottom:8px;">⚠️</div>
-        <div style="font-size:13px;color:var(--red);font-weight:600;" id="draft-error-msg">Could not draft message</div>
+        <div style="font-size:13px;color:var(--red);font-weight:600;" id="draft-error-msg">Could not send to Zapier</div>
         <button onclick="redraftMessage()" style="margin-top:12px;padding:10px 20px;background:var(--gold);border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;color:var(--bg);cursor:pointer;">Try Again</button>
       </div>
     </div>
@@ -1304,10 +1302,12 @@ function applySnooze(val,type) {
 // ══════════════════════════════════════════════
 function openSettings() {
   document.getElementById('set-name').value=settings.name||'';
+  document.getElementById('set-draft-webhook').value=settings.draftWebhook||'';
   openModal('settingsModal');
 }
 function saveSettings() {
   settings.name=document.getElementById('set-name').value.trim();
+  settings.draftWebhook=document.getElementById('set-draft-webhook').value.trim();
   localStorage.setItem('scw_settings',JSON.stringify(settings));
   closeModal('settingsModal'); showToast('Settings saved');
 }
@@ -1315,6 +1315,139 @@ function clearAll() {
   if (!confirm('Delete ALL tasks and prospects?')) return;
   tasks=[]; prospects=[]; saveTasks(); saveProspects();
   closeModal('settingsModal'); render(); showToast('All data cleared');
+}
+
+// ══════════════════════════════════════════════
+// DRAFT FOLLOW-UP (via Zapier → AI by Zapier → Gmail)
+// ══════════════════════════════════════════════
+let draftProspectId=null;
+
+function showDraftState(state) {
+  document.getElementById('draft-loading').style.display = state==='loading'?'block':'none';
+  document.getElementById('draft-content').style.display = state==='sent'?'block':'none';
+  document.getElementById('draft-error').style.display  = state==='error'?'block':'none';
+}
+
+async function openDraftModal(id) {
+  const p=prospects.find(x=>x.id===id); if (!p) return;
+  draftProspectId=id;
+  document.getElementById('draft-title').textContent='Draft Follow-Up';
+  openModal('draftModal');
+  await sendDraftRequest();
+}
+
+async function sendDraftRequest() {
+  const p=prospects.find(x=>x.id===draftProspectId); if (!p) return;
+  const webhook=(settings.draftWebhook||'').trim();
+  if (!webhook) {
+    showDraftState('error');
+    document.getElementById('draft-error-msg').innerHTML='No Draft webhook set.<br>Add your Zapier Catch Hook URL in Settings → Draft Email Webhook.';
+    return;
+  }
+  showDraftState('loading');
+  const prog=document.getElementById('draft-progress');
+  prog.style.width='0%'; setTimeout(()=>prog.style.width='90%',60);
+  const payload={
+    action:'draft_followup',
+    id:p.id, name:p.name, stage:p.stage, prospectType:p.prospectType,
+    frequency:p.frequency, lastContacted:p.lastContacted||'', nextContact:p.nextContact||'',
+    notes:p.notes||'', adviser:settings.name||'Sean', timestamp:new Date().toISOString()
+  };
+  try {
+    await fetch(webhook,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    prog.style.width='100%';
+    document.getElementById('draft-sent-msg').textContent=`Zapier is drafting a personalised follow-up to ${p.name} with AI by Zapier and saving it to your Gmail drafts.`;
+    document.getElementById('draft-recap').innerHTML=`
+      <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px;">Sent to Zapier</div>
+      <div style="font-size:13px;color:var(--text1);font-weight:600;margin-bottom:3px;">${esc(p.name)}</div>
+      <div style="font-size:12px;color:var(--text2);">${esc(p.stage)} · ${esc(p.prospectType)}</div>
+      ${p.notes?`<div style="font-size:12px;color:var(--text3);margin-top:6px;font-style:italic;">${esc(p.notes.slice(0,140))}</div>`:''}`;
+    showDraftState('sent');
+  } catch(e) {
+    showDraftState('error');
+    document.getElementById('draft-error-msg').textContent='Could not reach Zapier. Check your connection and try again.';
+  }
+}
+
+function redraftMessage() { sendDraftRequest(); }
+
+function logContactedFromDraft() {
+  if (draftProspectId) markContacted(draftProspectId);
+  closeModal('draftModal');
+}
+
+// ══════════════════════════════════════════════
+// VOICE-TO-TASK CAPTURE
+// ══════════════════════════════════════════════
+let voiceRecog=null, voiceListening=false;
+
+function parseVoiceTask(raw) {
+  raw=(raw||'').trim().replace(/\s+/g,' ');
+  const s=' '+raw.toLowerCase()+' ';
+  // Priority
+  let priority='medium';
+  if (/ (low priority|whenever|no rush|sometime|eventually) /.test(s)) priority='low';
+  else if (/ (high priority|urgent|asap|important|critical|priority) /.test(s)) priority='high';
+  // Due date — formatted in LOCAL time to avoid a one-day shift in +UTC zones
+  let due=null;
+  const t=new Date(); t.setHours(0,0,0,0);
+  const localISO=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const wd={sunday:0,monday:1,tuesday:2,wednesday:3,thursday:4,friday:5,saturday:6};
+  let m;
+  if (/ today /.test(s)) due=localISO(t);
+  else if (/ tomorrow /.test(s)) { const d=new Date(t); d.setDate(d.getDate()+1); due=localISO(d); }
+  else if (m=s.match(/ in (\d+) days? /)) { const d=new Date(t); d.setDate(d.getDate()+parseInt(m[1])); due=localISO(d); }
+  else if (/ (next week|in a week) /.test(s)) { const d=new Date(t); d.setDate(d.getDate()+7); due=localISO(d); }
+  else { for (const k in wd) { if (new RegExp(' '+k+' ').test(s)) { const d=new Date(t); const diff=((wd[k]-d.getDay()+7)%7)||7; d.setDate(d.getDate()+diff); due=localISO(d); break; } } }
+  // Client + action — capture the name words after a contact verb, stopping at a connective/keyword
+  let client='', task=raw;
+  const vm=raw.match(/\b(call|phone|email|e-?mail|contact|text|message|meet|chase|follow ?-?up with|remind me to (?:call|email|contact|phone))\s+/i);
+  if (vm) {
+    const after=raw.slice(vm.index+vm[0].length);
+    const stop=/^(about|regarding|re|on|for|to|that|with|the|a|an|next|tomorrow|today|this|in|by|before|after|high|low|urgent|asap|important|critical|priority|whenever|monday|tuesday|wednesday|thursday|friday|saturday|sunday)$/i;
+    const words=after.split(' ');
+    const nameWords=[];
+    for (const w of words) { const bare=w.replace(/[^A-Za-z'’-]/g,''); if (!bare||stop.test(bare)||nameWords.length>=3) break; nameWords.push(bare); }
+    if (nameWords.length) {
+      client=nameWords.map(w=>w.charAt(0).toUpperCase()+w.slice(1)).join(' ');
+      task=words.slice(nameWords.length).join(' ').replace(/^(about|regarding|re|on|for|to|that)\s+/i,'').trim();
+    }
+  }
+  // Remove the already-extracted date/priority phrases from the visible action text
+  task=task.replace(/\b(today|tomorrow|next week|in a week|in \d+ days?|on (?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)|monday|tuesday|wednesday|thursday|friday|saturday|sunday|high priority|low priority|urgent|asap|important|critical|no rush|whenever)\b/gi,'').replace(/\s{2,}/g,' ').replace(/[\s,.;]+$/,'').trim();
+  if (!task) task = vm ? 'Follow up' : raw;
+  task=task.charAt(0).toUpperCase()+task.slice(1);
+  return { client, task, due, priority };
+}
+
+function startVoiceCapture() {
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if (!SR) { showToast('Voice input not supported on this browser',true); return; }
+  if (voiceListening) { try { voiceRecog.stop(); } catch(e) {} return; }
+  voiceRecog=new SR();
+  voiceRecog.lang='en-ZA';
+  voiceRecog.interimResults=false;
+  voiceRecog.maxAlternatives=1;
+  const btn=document.getElementById('mic-fab');
+  voiceListening=true; btn.classList.add('listening'); btn.textContent='⏹'; showToast('🎤 Listening — say your task');
+  voiceRecog.onresult=e=>{ handleVoiceResult(e.results[0][0].transcript); };
+  voiceRecog.onerror=e=>{ if (e.error!=='aborted'&&e.error!=='no-speech') showToast('Voice error: '+e.error,true); else if (e.error==='no-speech') showToast('Didn’t catch that — try again',true); };
+  voiceRecog.onend=()=>{ voiceListening=false; btn.classList.remove('listening'); btn.textContent='🎤'; };
+  try { voiceRecog.start(); } catch(e) { voiceListening=false; btn.classList.remove('listening'); btn.textContent='🎤'; }
+}
+
+function handleVoiceResult(txt) {
+  if (!txt||!txt.trim()) { showToast('Didn’t catch that — try again',true); return; }
+  const p=parseVoiceTask(txt);
+  openAddModal('doer');
+  document.getElementById('in-client').value=p.client||'';
+  document.getElementById('in-task').value=p.task||'';
+  if (p.due) document.getElementById('in-due').value=p.due;
+  selPri_=p.priority;
+  document.querySelectorAll('.pri-opt').forEach(o=>o.className='pri-opt'+(o.dataset.p===p.priority?' sel-'+p.priority:''));
+  document.getElementById('modal-title').textContent='🎤 Review Voice Task';
+  document.getElementById('in-notes').value='🎤 "'+txt.trim()+'"';
+  showToast('Review the details, then Save');
 }
 
 // ══════════════════════════════════════════════
