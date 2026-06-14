@@ -491,6 +491,7 @@ const WEBHOOK_NEW      = 'https://hooks.zapier.com/hooks/catch/21472635/43idk4h/
 const WEBHOOK_COMPLETE = 'https://hooks.zapier.com/hooks/catch/21472635/43idp8r/';
 const WEBHOOK_PROSPECT = 'https://hooks.zapier.com/hooks/catch/21472635/43i8ywd/';
 const WEBHOOK_ONGOING  = 'https://hooks.zapier.com/hooks/catch/21472635/43ik9rw/';
+const WEBHOOK_CONTACTED = 'https://hooks.zapier.com/hooks/catch/21472635/43ifgjt/';
 const SHEETS_KEY       = 'AIzaSyBZOb31FgIpAS-osS37CL86fordN743neI';
 const SHEETS_ID        = '1F-mydndEOoQptJexuFV5edo8i1ZwQ1RtZk0ua8zpYiA';
 
@@ -1066,7 +1067,22 @@ async function markContacted(id) {
   p.lastContacted=today;
   p.nextContact=addDays(today,freqDays(p.frequency));
   saveProspects();
-  await fireProspectWebhook({...p,action:'prospect_contacted'});
+  // Fire to dedicated contacted webhook for sheet update
+  try {
+    await fetch(WEBHOOK_CONTACTED, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        id: p.id,
+        name: p.name,
+        lastContacted: p.lastContacted,
+        nextContact: p.nextContact,
+        action: 'prospect_contacted',
+        adviser: settings.name||'Sean',
+        timestamp: new Date().toISOString()
+      })
+    });
+  } catch(e) {}
   render(); showToast(p.name+' — next contact set to '+fmtDate(p.nextContact));
 }
 
